@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>项目文档 · 深雪 ~miyuki~ 架构与玩法</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "Hiragino Mincho ProN","Songti SC","Noto Serif SC",serif; background:#0c1018; color:#dfe6f0; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 30px 22px 80px; }
+h1 { font-size: 30px; letter-spacing: 8px; color:#f4e9c8; margin: 18px 0 6px; }
+.sub { color:#8fa0ba; font-size:14px; letter-spacing:2px; margin-bottom: 22px; }
+h2 { font-size: 20px; letter-spacing: 4px; color:#e8d9a8; margin: 34px 0 12px; border-left: 4px solid #d8c68a; padding-left: 12px; }
+p, li { line-height: 2; font-size: 15px; }
+code, .kbd { background:#1a2136; border:1px solid #33405e; border-radius:4px; padding:1px 8px; font-family: Menlo, monospace; font-size: 13.5px; color:#cfe0f8; }
+pre { background:#101726; border:1px solid #2a3654; border-radius:8px; padding: 14px 18px; font-size: 13.5px; line-height:1.8; overflow:auto; margin: 10px 0; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 16px; font-size: 14px; }
+th, td { border: 1px solid #2a3654; padding: 7px 12px; text-align: left; line-height: 1.7; }
+th { background:#1a2136; color:#f4e9c8; letter-spacing:1px; }
+canvas { width: 100%; background:#0e1322; border:1px solid #2a3654; border-radius: 10px; display:block; }
+a { color:#d8c68a; }
+.tip { background:#141b2e; border:1px dashed #3a4a70; border-radius: 8px; padding: 12px 18px; margin: 12px 0; }
+.menu a { display:inline-block; margin: 4px 14px 4px 0; font-size:14px; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>深雪 ~miyuki~ 项目文档</h1>
+  <div class="sub">雪国开放世界 GALGAME · 五层 Agent 架构 · <a href="/">▶ 返回游戏</a> · <a href="/code.html">代码结构全解</a> · <a href="/playthrough.html">通关实录</a></div>
+
+  <h2>① 如何打开游戏</h2>
+  <pre>cd "/Users/luokeke/zcode workspace/GAL项目/game"
+python3 -m uvicorn server.app:app --host 127.0.0.1 --port 8300
+# 浏览器打开  http://127.0.0.1:8300</pre>
+  <div class="tip">当前服务器已在运行：<b>http://127.0.0.1:8300</b>（标题页点「开始游戏」）。对话点击/回车推进；选项可自由输入；剧情节点之间可自由移动/交谈/过夜；右上角 ♪ 音乐开关，存档读档在菜单栏。</div>
+
+  <h2>② 总体架构流程图（画布绘制）</h2>
+  <canvas id="arch" width="1080" height="1180"></canvas>
+
+  <h2>③ 项目文档位置</h2>
+  <table>
+    <tr><th>文档</th><th>位置</th><th>内容</th></tr>
+    <tr><td>总 README（推荐先读）</td><td><code>game/README.md</code></td><td>架构总览、目录结构、玩法、API、测试、LLM/BGM 说明</td></tr>
+    <tr><td>本页（画布架构图）</td><td><code>game/web/docs.html</code></td><td>五层架构与运行流程可视化</td></tr>
+    <tr><td>架构设计原稿</td><td><code>../架构设计V1.md</code></td><td>五层架构设计依据</td></tr>
+    <tr><td>人物圣经</td><td><code>../人物设定与关系总览.md</code></td><td>人设卡/行为模式库/谜团锁的出处</td></tr>
+    <tr><td>原始剧本</td><td><code>../素材文本/原文剧本.txt</code></td><td>场景脚本的正典台词来源</td></tr>
+    <tr><td>夜间运行日志</td><td><code>game/logs/night_notes.md</code>、<code>supervisor.log</code></td><td>监督自动化记录</td></tr>
+  </table>
+
+  <h2>④ 常用命令</h2>
+  <pre>python3 tests/test_consistency.py    # 引擎一致性回归（32 项，离线）
+python3 tests/e2e_playthrough.py     # 自动通关 P1→P0（离线，0.5s）
+python3 tests/test_llm.py            # LLM 实链路验证（真实调用，会耗额度）
+python3 supervisor.py --once         # 监督：健康探测+自动重启+全量回归
+python3 tools/gen_backgrounds.py    # 重新生成背景图
+python3 tools/gen_sprites.py        # 重新生成立绘
+python3 tools/gen_music.py          # 重新合成 BGM</pre>
+
+  <h2>⑤ LLM 配置（game/llm.json）</h2>
+  <pre>{
+  "apiKey":   "sk-...",
+  "baseUrl":  "https://api.deepseek.com",
+  "model":    "deepseek-flash",
+  "extraBody": { "thinking": {"type": "disabled"} },   ← 关思考模式（重要：开启时 token 全被推理吃掉，正文为空且延迟暴涨）
+  "timeout":  25
+}</pre>
+  <div class="tip">调用链：玩家输入 → 护栏前校验 → 现场拼装（人设卡+记忆+场景+知识边界+阶段约束）→ DeepSeek → 护栏校验（称谓/语气词/禁忌词/谜团锁）→ 违规重试 ≤2 次 → 仍失败回落规则引擎。台词帧 <code>src</code> 字段标明 <code>llm</code> / <code>rules</code>。测试离线开关：<code>POST /api/mode {"llm":false}</code>。</div>
+</div>
+
+<script>
+// ============ 画布：五层架构与运行流程图 ============
+const cv = document.getElementById('arch');
+const dpr = window.devicePixelRatio || 1;
+const W = 1080, H = 1180;
+cv.width = W * dpr; cv.height = H * dpr;
+const g = cv.getContext('2d');
+g.scale(dpr, dpr);
+
+const C = {
+  bg: '#0e1322', layer: ['#23304f','#2a2350','#1f3a44','#24402e','#3d2c46'],
+  line: '#55688f', text: '#dfe6f0', gold: '#d8c68a', dim: '#8fa0ba',
+  arrow: '#a8bede', hot: '#e8a0a0', green: '#9fd8a8', blue: '#9fc4e8',
+};
+
+function box(x, y, w, h, fill, radius) {
+  g.beginPath();
+  g.roundRect(x, y, w, h, radius == null ? 10 : radius);
+  g.fillStyle = fill; g.fill();
+  g.strokeStyle = C.line; g.lineWidth = 1.4; g.stroke();
+}
+function txt(s, x, y, size, color, align, bold) {
+  g.font = (bold ? '600 ' : '') + (size || 14) + 'px "Songti SC","Noto Serif SC",serif';
+  g.fillStyle = color || C.text;
+  g.textAlign = align || 'left';
+  g.fillText(s, x, y);
+}
+function arrow(x1, y1, x2, y2, color, dashed, label, lx, ly) {
+  g.beginPath();
+  g.setLineDash(dashed ? [6, 5] : []);
+  g.moveTo(x1, y1); g.lineTo(x2, y2);
+  g.strokeStyle = color || C.arrow; g.lineWidth = 1.6; g.stroke();
+  g.setLineDash([]);
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  g.beginPath();
+  g.moveTo(x2, y2);
+  g.lineTo(x2 - 9 * Math.cos(ang - 0.42), y2 - 9 * Math.sin(ang - 0.42));
+  g.lineTo(x2 - 9 * Math.cos(ang + 0.42), y2 - 9 * Math.sin(ang + 0.42));
+  g.closePath(); g.fillStyle = color || C.arrow; g.fill();
+  if (label) txt(label, lx || (x1 + x2) / 2 + 8, ly || (y1 + y2) / 2 - 6, 12, C.dim);
+}
+
+// ---------- 标题 ----------
+txt('深雪 ~miyuki~ · 引擎总体架构与运行流程', W / 2, 42, 21, C.gold, 'center', true);
+txt('架构依据：架构设计V1.md 五层模型 ｜ 实现：game/server/', W / 2, 66, 12.5, C.dim, 'center');
+
+// ---------- 左：五层静态架构 ----------
+txt('A. 五层架构（自上而下调用）', 40, 100, 15, C.text, 'left', true);
+const LX = 40, LW = 470;
+const layers = [
+  ['表现层 · web/', 'galgame UI：背景/立绘/打字机/选项/自由输入/存档/日志/BGM', C.layer[0]],
+  ['导演层 · director/', '剧情吸引子 P0~P10 + 前置条件表 + 叙事压力 + 冬祭倒计时', C.layer[1]],
+  ['Agent 层 · agents/', '无状态角色 Agent：人设卡 + 记忆检索 + 知识边界（现场拼装）', C.layer[2]],
+  ['世界层 · world/', '事实库/场景图/知识库(谁知道·几手)/关系矩阵/事件总线', C.layer[3]],
+  ['护栏层 · guardrails', '风格校验(称谓/语气词/禁忌词) + 谜团锁 + 违规重试≤2', C.layer[4]],
+];
+let ly = 112;
+layers.forEach((L, i) => {
+  box(LX, ly, LW, 74, L[2]);
+  txt(L[0], LX + 16, ly + 28, 15, C.gold, 'left', true);
+  txt(L[1], LX + 16, ly + 52, 12, C.text);
+  if (i < layers.length - 1) arrow(LX + LW / 2, ly + 74, LX + LW / 2, ly + 96, C.arrow, false);
+  ly += 96;
+});
+txt('调用/数据下行 ↑↑ 事件上行（事件总线）', LX + LW / 2, ly - 2, 12, C.dim, 'center');
+
+// 外挂模块
+box(LX, ly + 14, LW, 58, '#33405e');
+txt('外挂：DeepSeek LLM（thinking disabled）｜ 规则引擎兜底（正典语料+意图分类）', LX + 16, ly + 38, 12, C.blue);
+txt('BGM 合成 · 程序化立绘/背景 · 事件溯源存档 saves/', LX + 16, ly + 58, 12, C.dim);
+
+// ---------- 右：一次玩家输入的时序 ----------
+const RX = 570, RW = 470;
+txt('B. 一次玩家输入的运行时序', RX, 100, 15, C.text, 'left', true);
+const steps = [
+  ['玩家点击选项 / 自由输入', '表现层 main.js → POST /api/input'],
+  ['engine.submit_input', '写入事件总线 · 好感/旗标结算'],
+  ['Agent 拼装 prompt', '人设卡(静态) + 记忆检索 + 场景 + 知识边界\n+ 阶段约束（防泄漏后设）'],
+  ['DeepSeek 调用', 'thinking=disabled · 超时 25s · 失败重试≤2'],
+  ['护栏校验', '称谓/语气词/禁忌词/谜团锁 —— 违规打回'],
+  ['回落规则引擎', '正典行为模式库按意图应答（保证可玩）'],
+  ['帧渲染', '台词帧(src=llm/rules) · 立绘表情 · BGM 切换'],
+];
+let sy = 112;
+steps.forEach((s, i) => {
+  box(RX, sy, RW, 46, i === 4 ? '#40303e' : '#1c2540');
+  txt((i + 1) + '. ' + s[0], RX + 14, sy + 20, 13.5, C.gold, 'left', true);
+  txt(s[1], RX + 14, sy + 37, 11, C.text);
+  if (i < steps.length - 1) arrow(RX + 30, sy + 46, RX + 30, sy + 64);
+  sy += 64;
+});
+// 回退箭头：护栏→规则
+arrow(RX + RW - 30, sy - 64 - 46 + 23, RX + RW - 30, sy - 64 + 23, C.hot, true, '违规回落', RX + RW - 130, sy - 64 + 16);
+
+// ---------- 下：剧情推进与每日循环 ----------
+const DY = ly + 110;
+txt('C. 导演层剧情推进循环（幕间自由行动期间）', 40, DY, 15, C.text, 'left', true);
+const cy = DY + 18;
+box(40, cy, 1000, 300, '#141b30', 14);
+// 节点
+const nodes = [
+  [90,  cy + 60,  '玩家自由行动', '移动(场景图) / 交谈 / 过夜'],
+  [390, cy + 60,  '世界层结算',   '天数+1 · 冬祭倒计时-1'],
+  [690, cy + 60,  '八卦传播引擎', '性格过滤器 · 走样 · 写入知识库'],
+  [240, cy + 210, '导演计算叙事压力', '前置条件满足 + 压力≥70'],
+  [590, cy + 210, '剧情吸引子触发', '「▶ 推进剧情」按钮亮起'],
+  [860, cy + 210, '进入下一节点', 'P1→…→P10→P0'],
+];
+nodes.forEach(n => {
+  box(n[0], n[1], 190, 62, '#1f2a48');
+  txt(n[2], n[0] + 95, n[1] + 26, 13.5, C.gold, 'center', true);
+  txt(n[3], n[0] + 95, n[1] + 46, 11, C.text, 'center');
+});
+arrow(280, cy + 91, 390, cy + 91);
+arrow(580, cy + 91, 690, cy + 91);
+arrow(785, cy + 122, 400, cy + 210, C.arrow, false, '', 0, 0);
+txt('每日循环（wait/过夜触发）', 500, cy + 40, 12, C.dim, 'center');
+arrow(430, cy + 241, 590, cy + 241, C.green, false, '压力达标', 465, cy + 234);
+arrow(780, cy + 241, 860, cy + 241, C.green);
+// 回流：进入节点 → 新的幕间
+arrow(955, cy + 241, 985, cy + 150, C.green, true);
+arrow(985, cy + 150, 185, cy + 130, C.green, true, '节点结束后回到自由行动（幕间）', 430, cy + 130);
+
+// ---------- 底部图例 ----------
+txt('图例：', 40, cy + 345, 13, C.dim);
+arrow(95, cy + 340, 140, cy + 340, C.arrow); txt('同步调用/流程', 148, cy + 345, 12, C.dim);
+arrow(280, cy + 340, 325, cy + 340, C.hot, true); txt('护栏违规回落', 333, cy + 345, 12, C.dim);
+arrow(450, cy + 340, 495, cy + 340, C.green); txt('导演推进/循环', 503, cy + 345, 12, C.dim);
+txt('实现映射：engine.py=时序编排 · director.py=吸引子与压力 · gossip.py=传播 · rule_engine.py=兜底 · guardrails.py=校验 · llm.py=模型适配', 40, cy + 380, 12, C.dim);
+</script>
+</body>
+</html>

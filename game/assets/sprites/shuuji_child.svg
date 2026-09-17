@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+<defs>
+
+<linearGradient id="hairB" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#211d26"/><stop offset="0.5" stop-color="#37313f"/><stop offset="1" stop-color="#1d1a22"/>
+</linearGradient>
+<linearGradient id="coatChild" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#96764e"/><stop offset="1" stop-color="#7a5f3e"/>
+</linearGradient>
+<linearGradient id="coatTeen" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#5e646e"/><stop offset="1" stop-color="#484d57"/>
+</linearGradient>
+<linearGradient id="skinS" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#f7ecdc"/><stop offset="1" stop-color="#ecdcc6"/>
+</linearGradient>
+
+</defs>
+<g id="body">
+  <!-- 腿与雪靴 -->
+  <path fill="#3d3a44" stroke="#2a2430" stroke-width="3" d="M262 800 L 262 930 L 292 930 L 296 800 Z"/>
+  <path fill="#3d3a44" stroke="#2a2430" stroke-width="3" d="M338 800 L 338 930 L 308 930 L 304 800 Z"/>
+  <path fill="#4a3d30" stroke="#2a2430" stroke-width="3" d="M256 928 L 298 928 L 302 958 L 250 958 Z"/>
+  <path fill="#4a3d30" stroke="#2a2430" stroke-width="3" d="M344 928 L 302 928 L 298 958 L 350 958 Z"/>
+  <!-- 棉外套 -->
+  <path fill="url(#coatChild)" stroke="#2a2430" stroke-width="3"
+    d="M244 392 C 220 424 214 500 222 560 C 226 620 240 700 252 810
+       L 348 810 C 360 700 374 620 378 560 C 386 500 380 424 356 392
+       C 330 376 270 376 244 392 Z"/>
+  <path fill="#6b5436" opacity="0.5" d="M252 560 L 348 560 L 350 596 L 250 596 Z"/>
+  <circle cx="300" cy="470" r="5" fill="#3a2f22"/><circle cx="300" cy="540" r="5" fill="#3a2f22"/>
+  <circle cx="300" cy="610" r="5" fill="#3a2f22"/>
+  <!-- 口袋 -->
+  <path fill="none" stroke="#2a2430" stroke-width="2.5" d="M252 640 L 284 640 L 280 688 L 254 688 Z"/>
+  <path fill="none" stroke="#2a2430" stroke-width="2.5" d="M348 640 L 316 640 L 320 688 L 346 688 Z"/>
+  <!-- 左臂（插兜别扭状） -->
+  <path fill="url(#coatChild)" stroke="#2a2430" stroke-width="3"
+    d="M230 408 C 206 440 202 500 214 550 C 220 576 232 592 248 598
+       L 262 560 C 250 548 244 528 244 500 C 244 462 250 430 262 412 Z"/>
+  <!-- 右臂微握拳 -->
+  <path fill="url(#coatChild)" stroke="#2a2430" stroke-width="3"
+    d="M370 408 C 394 440 398 500 388 552 C 382 580 372 596 356 602
+       L 344 566 C 356 552 362 532 362 502 C 362 464 356 432 346 414 Z"/>
+  <circle cx="352" cy="604" r="16" fill="url(#skinS)" stroke="#2a2430" stroke-width="2.5"/>
+  <!-- 围巾 -->
+  <g id="scarf">
+    <path fill="#d8a24a" stroke="#2a2430" stroke-width="3" d="M248 386 C 270 404 330 404 352 386
+      C 364 398 362 420 346 430 C 326 420 274 420 254 430 C 238 420 236 398 248 386 Z"/>
+    <path fill="#c8923e" stroke="#2a2430" stroke-width="3" d="M322 424 L 352 520 L 322 530 L 296 440 Z"/>
+  </g>
+</g><g id="face-base">
+  <path d="M300 388 C 248 388 242 305.5 242 285.7
+    C 242 248 271 242 300 242
+    C 329 242 358 248 358 285.7
+    C 358 305.5 352 388 300 388 Z"
+    fill="url(#skinS)" stroke="#2a2430" stroke-width="3"/>
+  <ellipse cx="244" cy="328" rx="8" ry="13" fill="url(#skinS)" stroke="#2a2430" stroke-width="2.5"/>
+  <ellipse cx="356" cy="328" rx="8" ry="13" fill="url(#skinS)" stroke="#2a2430" stroke-width="2.5"/>
+</g><g id="hair-front" stroke="#2a2430" stroke-width="3">
+  <path fill="url(#hairB)" d="M238 295.6 C 236 264 252 244 270 238
+    L 300 228 L 334 240 C 350 248 364 270 362 295.6
+    C 358 275.8 344 259.3 300 259.3
+    C 256 259.3 242 275.8 238 295.6 Z"/>
+  <path fill="url(#hairB)" d="M240 289.0 C 232 316 238 348 252 352
+    L 258 314 Z"/>
+  <path fill="url(#hairB)" d="M360 289.0 C 368 316 362 348 348 352
+    L 342 314 Z"/>
+  <path fill="none" stroke="#4e4658" stroke-width="4" opacity="0.8" stroke-linecap="round"
+    d="M262 252 C 270 246 282 244 290 248"/>
+  <path fill="none" stroke="#4e4658" stroke-width="4" opacity="0.8" stroke-linecap="round"
+    d="M314 246 C 324 242 336 246 344 254"/>
+</g><g id="features"><g>
+  <path fill="#ffffff" d="M255.0 328.0 C 256.0 312.0 263.0 308.0 272 308.0
+      C 281.0 308.0 288.0 312.0 289.0 328.0
+      C 286.0 336.0 280.0 339.0 272 339.0
+      C 264.0 339.0 258.0 336.0 255.0 328.0 Z"/>
+  <ellipse cx="272" cy="326.0" rx="8*s" ry="9.5*s" fill="#3a3242"/>
+  <circle cx="269.5" cy="322.0" r="3*s" fill="#fff" opacity="0.95"/>
+  <path fill="none" stroke="#2a2430" stroke-width="4*s" stroke-linecap="round"
+    d="M255.0 327.0 C 258.0 309.0 263.0 306.0 272 306.0
+       C 281.0 306.0 286.0 309.0 289.0 327.0"/>
+</g><g>
+  <path fill="#ffffff" d="M311.0 328.0 C 312.0 312.0 319.0 308.0 328 308.0
+      C 337.0 308.0 344.0 312.0 345.0 328.0
+      C 342.0 336.0 336.0 339.0 328 339.0
+      C 320.0 339.0 314.0 336.0 311.0 328.0 Z"/>
+  <ellipse cx="328" cy="326.0" rx="8*s" ry="9.5*s" fill="#3a3242"/>
+  <circle cx="325.5" cy="322.0" r="3*s" fill="#fff" opacity="0.95"/>
+  <path fill="none" stroke="#2a2430" stroke-width="4*s" stroke-linecap="round"
+    d="M311.0 327.0 C 314.0 309.0 319.0 306.0 328 306.0
+       C 337.0 306.0 342.0 309.0 345.0 327.0"/>
+</g><path fill="none" stroke="#3c333a" stroke-width="4" stroke-linecap="round"
+      d="M254 298 C 262 293 272 294 280 298"/>
+    <path fill="none" stroke="#3c333a" stroke-width="4" stroke-linecap="round"
+      d="M320 298 C 328 294 338 293 346 298"/><path fill="none" stroke="#2a2430" stroke-width="3.2" stroke-linecap="round"
+      d="M286 362 C 293 358 307 358 314 362"/><ellipse cx="252" cy="342" rx="11" ry="6" fill="#e8a49c" opacity="0.4"/><ellipse cx="348" cy="342" rx="11" ry="6" fill="#e8a49c" opacity="0.4"/></g>
+</svg>

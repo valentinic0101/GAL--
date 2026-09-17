@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+<defs>
+<linearGradient id="kG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6a5c4c"/><stop offset="1" stop-color="#5a4e40"/></linearGradient>
+</defs>
+<g id="body">
+  <!-- 佝偻背形和服 -->
+  <path fill="#6a5c4c" stroke="#2a2430" stroke-width="3"
+    d="M286 350 C 240 380 222 450 226 520 C 230 600 240 700 250 800
+       L 420 800 C 430 700 440 600 444 520 C 448 450 430 380 384 350
+       C 350 332 316 332 286 350 Z"/>
+  <path fill="#5a4e40" opacity="0.6" d="M250 800 C 240 700 230 600 226 520 C 222 450 240 380 286 350
+    C 300 342 316 337 332 336 L 336 800 Z"/>
+  <path fill="#e5ded2" stroke="#2a2430" stroke-width="2.5" d="M316 344 L 340 400 L 366 344 L 352 338 L 340 368 L 328 338 Z"/>
+  <!-- 拄杖右臂 -->
+  <path fill="#6a5c4c" stroke="#2a2430" stroke-width="3"
+    d="M400 372 C 428 392 436 440 430 480 C 424 516 412 540 396 552
+       L 380 516 C 394 502 400 482 398 452 C 396 420 392 392 384 378 Z"/>
+  <circle cx="392" cy="552" r="14" fill="#e8d8bc" stroke="#2a2430" stroke-width="2.5"/>
+  <path fill="none" stroke="#4a3a28" stroke-width="10" stroke-linecap="round" d="M420 320 L 452 950"/>
+  <!-- 左臂掩袖 -->
+  <path fill="#6a5c4c" stroke="#2a2430" stroke-width="3"
+    d="M270 372 C 244 392 236 440 242 482 C 248 518 260 542 278 554
+       L 292 518 C 278 504 272 484 274 454 C 276 422 280 392 288 378 Z"/>
+  <!-- 下摆与足 -->
+  <path fill="#4e4336" stroke="#2a2430" stroke-width="3" d="M250 790 L 420 790 L 424 920 L 246 920 Z"/>
+  <rect x="300" y="918" width="30" height="14" fill="#8a7458" stroke="#2a2430" stroke-width="2.5"/>
+  <rect x="352" y="918" width="30" height="14" fill="#8a7458" stroke="#2a2430" stroke-width="2.5"/>
+  <rect x="298" y="930" width="8" height="14" fill="#5a4a36"/>
+  <rect x="376" y="930" width="8" height="14" fill="#5a4a36"/>
+</g><g id="face-base">
+  <path d="M340 330 C 288 324 284 268 284 237.0
+    C 284 190 312 184 340 184
+    C 368 184 396 190 396 237.0
+    C 396 268 392 324 340 330 Z"
+    fill="#e8d8bc" stroke="#2a2430" stroke-width="3"/>
+  <!-- 皱纹 -->
+  <path fill="none" stroke="#2a2430" stroke-width="2" opacity="0.5" d="M310 250 C 330 244 350 244 370 250"/>
+  <path fill="none" stroke="#2a2430" stroke-width="2" opacity="0.5" d="M314 294 C 330 298 350 298 366 294"/>
+  <path fill="none" stroke="#2a2430" stroke-width="2" opacity="0.5" d="M298 260 L 310 264"/>
+  <!-- 左眼（独眼：右眼戴罩） -->
+  <path fill="none" stroke="#2a2430" stroke-width="3.6" stroke-linecap="round" d="M306 268 C 312 262 322 262 328 268"/>
+  <path fill="none" stroke="#2a2430" stroke-width="2.4" stroke-linecap="round" d="M310 276 C 316 279 322 279 326 276"/>
+  <!-- 眼罩 -->
+  <path fill="#1e1a20" stroke="#2a2430" stroke-width="2.5" d="M348 256 C 362 252 376 254 382 262
+    C 384 272 378 280 364 280 C 352 280 346 272 348 256 Z"/>
+  <path fill="none" stroke="#2a2430" stroke-width="3" d="M290 252 C 320 238 360 236 392 254"/>
+  <!-- 嘴（抿）与须 -->
+  <path fill="none" stroke="#2a2430" stroke-width="3" stroke-linecap="round" d="M328 308 C 336 312 344 312 352 308"/>
+  <path fill="#d8d2c4" d="M316 302 C 328 320 352 320 364 302
+    C 356 326 324 326 316 302 Z" stroke="#2a2430" stroke-width="2"/>
+</g><g id="hair" stroke="#2a2430" stroke-width="3">
+  <path fill="#d8d4cc" d="M284 237.0 C 280 198 320 186 340 186
+    C 360 186 400 198 396 237.0
+    C 388 204 292 204 284 237.0 Z" opacity="0.9"/>
+  <circle cx="340" cy="184" r="12" fill="#cfcac0"/>
+  <path fill="#d8d4cc" d="M282 243.2 C 274 298 282 338 300 348
+    L 302 298 Z"/>
+  <path fill="#d8d4cc" d="M398 243.2 C 406 298 398 338 380 348
+    L 378 298 Z"/>
+</g>
+</svg>

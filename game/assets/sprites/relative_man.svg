@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+<defs>
+
+</defs>
+<g id="body">
+  <!-- 发福身躯：毛衣+背心 -->
+  <path fill="#5c7050" stroke="#2a2430" stroke-width="3"
+    d="M232 330 C 200 360 188 430 196 500 C 204 570 216 650 226 720
+       L 374 720 C 384 650 396 570 404 500 C 412 430 400 360 368 330
+       C 336 310 264 310 232 330 Z"/>
+  <!-- 背心 -->
+  <path fill="#3e4436" opacity="0.9" d="M244 336 L 268 322 L 268 716 L 236 716 L 230 520
+    C 224 452 234 376 244 336 Z"/>
+  <path fill="#3e4436" opacity="0.9" d="M356 336 L 332 322 L 332 716 L 364 716 L 370 520
+    C 376 452 366 376 356 336 Z"/>
+  <!-- 衬衫领 -->
+  <path fill="#e8e4da" stroke="#2a2430" stroke-width="2.5" d="M270 318 L 300 356 L 330 318 L 318 310 L 300 334 L 282 310 Z"/>
+  <!-- 推诿的双手（摊开） -->
+  <path fill="#5c7050" stroke="#2a2430" stroke-width="3"
+    d="M226 350 C 196 386 190 452 202 512 C 208 544 220 566 238 576
+       L 254 538 C 240 522 234 498 236 464 C 238 428 244 390 258 364 Z"/>
+  <ellipse cx="252" cy="578" rx="20" ry="14" fill="#f0dfc8" stroke="#2a2430" stroke-width="2.5" transform="rotate(-18 252 578)"/>
+  <path fill="#5c7050" stroke="#2a2430" stroke-width="3"
+    d="M374 350 C 404 386 410 452 398 512 C 392 544 380 566 362 576
+       L 346 538 C 360 522 366 498 364 464 C 362 428 356 390 342 364 Z"/>
+  <ellipse cx="348" cy="578" rx="20" ry="14" fill="#f0dfc8" stroke="#2a2430" stroke-width="2.5" transform="rotate(18 348 578)"/>
+  <!-- 裤与鞋 -->
+  <path fill="#43423e" stroke="#2a2430" stroke-width="3" d="M232 716 L 372 716 L 378 930 L 322 930 L 302 800 L 282 930 L 226 930 Z"/>
+  <path fill="#2c2a26" d="M226 928 L 284 928 L 284 952 L 222 952 Z" stroke="#2a2430" stroke-width="2.5"/>
+  <path fill="#2c2a26" d="M316 928 L 378 928 L 380 952 L 318 952 Z" stroke="#2a2430" stroke-width="2.5"/>
+</g><g id="face-base">
+  <path d="M300 310 C 240 306 232 246 232 195.3
+    C 232 152 266 146 300 146
+    C 334 146 368 152 368 195.3
+    C 368 246 360 306 300 310 Z"
+    fill="#f0dfc8" stroke="#2a2430" stroke-width="3"/>
+  <!-- 八字眉（为难） -->
+  <path fill="none" stroke="#4a4038" stroke-width="4.5" stroke-linecap="round"
+    d="M256 210 C 266 204 276 206 284 212"/>
+  <path fill="none" stroke="#4a4038" stroke-width="4.5" stroke-linecap="round"
+    d="M316 212 C 324 206 334 204 344 210"/>
+  <!-- 眼（小，尴尬） -->
+  <path fill="none" stroke="#2a2430" stroke-width="3.6" stroke-linecap="round" d="M264 236 C 270 231 278 231 284 236"/>
+  <path fill="none" stroke="#2a2430" stroke-width="3.6" stroke-linecap="round" d="M316 236 C 322 231 330 231 336 236"/>
+  <!-- 圆眼镜 -->
+  <circle cx="274" cy="236" r="17" fill="none" stroke="#2a2430" stroke-width="3"/>
+  <circle cx="326" cy="236" r="17" fill="none" stroke="#2a2430" stroke-width="3"/>
+  <path fill="none" stroke="#2a2430" stroke-width="3" d="M291 234 L 309 234"/>
+  <!-- 嘴（向下撇） -->
+  <path fill="none" stroke="#2a2430" stroke-width="3.4" stroke-linecap="round"
+    d="M286 282 C 294 277 306 277 314 282"/>
+  <!-- 鼻 -->
+  <path fill="none" stroke="#2a2430" stroke-width="2.6" opacity="0.7" stroke-linecap="round" d="M300 254 l 4 8 l -8 2"/>
+  <!-- 冷汗 -->
+  <path fill="#bfe0ee" stroke="#2a2430" stroke-width="1.6" d="M352 212 C 348 222 354 226 356 218 C 356 212 352 208 352 212 Z"/>
+</g><g id="hair" stroke="#2a2430" stroke-width="3">
+  <path fill="#4e463e" d="M234 199.0 C 230 148 276 140 300 140
+    C 324 140 370 148 366 199.0
+    C 354 156 246 156 234 199.0 Z" opacity="0.85"/>
+  <!-- 地中海：两侧发 -->
+  <path fill="#4e463e" d="M232 202.7 C 226 226 232 262 246 268
+    L 248 216 Z"/>
+  <path fill="#4e463e" d="M368 202.7 C 374 226 368 262 354 268
+    L 352 216 Z"/>
+</g>
+</svg>

@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>通关实录 · 深雪 ~miyuki~（P1→P0 全轨迹）</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "Hiragino Mincho ProN","Songti SC","Noto Serif SC",serif; background:#0c1018; color:#d7dfea; }
+.wrap { max-width: 1000px; margin: 0 auto; padding: 26px 20px 120px; }
+h1 { font-size: 28px; letter-spacing: 7px; color:#f4e9c8; margin: 14px 0 4px; }
+.sub { color:#8fa0ba; font-size:13.5px; letter-spacing:2px; margin-bottom: 16px; }
+.sub a { color:#d8c68a; }
+.stats { display:flex; flex-wrap:wrap; gap:10px; margin: 14px 0; }
+.stat { background:#141b2e; border:1px solid #2a3654; border-radius:8px; padding: 8px 16px; font-size:13px; color:#9fb2cc; }
+.stat b { color:#e8d9a8; font-size:17px; margin-right:6px; }
+.phasebar { position: sticky; top: 0; z-index: 20; background: rgba(12,16,24,.94); backdrop-filter: blur(6px);
+  padding: 10px 0; border-bottom: 1px solid #223050; display:flex; gap:8px; flex-wrap:wrap; }
+.chip { font-size:13px; font-family:inherit; color:#c9d6e8; cursor:pointer; padding: 5px 14px;
+  background:#1a2136; border:1px solid #2a3654; border-radius: 16px; letter-spacing:1px; }
+.chip:hover, .chip.on { border-color:#d8c68a; color:#f4e9c8; }
+.filters { margin: 14px 0 6px; display:flex; gap:8px; flex-wrap:wrap; }
+h2.ph { font-size: 20px; letter-spacing: 4px; color:#e8d9a8; margin: 40px 0 4px; border-left: 4px solid #d8c68a; padding-left: 12px; }
+.ph-sub { color:#8fa0ba; font-size: 12.5px; margin: 0 0 12px 16px; letter-spacing:1px; }
+.entry { border-left: 2px solid #223050; margin-left: 8px; padding: 7px 0 7px 16px; position: relative; }
+.entry::before { content:''; position:absolute; left:-5px; top: 16px; width:8px; height:8px; border-radius:50%; background:#3a4a70; }
+.e-step { position:absolute; left:-52px; top: 13px; width: 40px; text-align:right; font-size: 11px; color:#5a6a88; font-family: Menlo, monospace; }
+.e-kind { display:inline-block; font-size: 10.5px; letter-spacing:2px; color:#5a6a88; margin-bottom: 2px; }
+.e-name { color:#d8c68a; font-size: 15.5px; margin-right: 8px; letter-spacing:2px; }
+.e-text { font-size: 15px; line-height: 1.95; }
+.e-action { color:#8fa0ba; font-size: 12.5px; font-style: italic; margin-top: 2px; }
+.e-narr .e-text { color:#b8c6da; font-style: italic; }
+.e-me .e-text { color:#f0e2b8; }
+.badge-src { font-size: 10.5px; padding: 1px 8px; border-radius: 9px; margin-left: 8px; vertical-align: 1px; letter-spacing:1px; }
+.src-llm { background:#3a2a1c; color:#e8b090; border:1px solid #7a5a48; }
+.src-rules { background:#1c2a3a; color:#90b8e0; border:1px solid #3a5a7a; }
+.e-choice, .e-inter, .e-world, .e-ctl { background:#101726; border:1px solid #223050; border-radius: 8px; margin-left: 8px; padding: 10px 16px; }
+.e-choice { border-left: 3px solid #7a6a48; }
+.e-inter { border-left: 3px solid #3a5a48; }
+.e-world { border-left: 3px solid #4a3a5a; }
+.e-ctl  { border-left: 3px solid #6a3a48; background:#1a1420; }
+.e-label { font-size: 11px; letter-spacing: 2px; color:#7a8aa8; margin-bottom: 4px; }
+.opt { display:inline-block; font-size: 13px; color:#c9d6e8; border:1px solid #2a3654; border-radius: 6px; padding: 3px 12px; margin: 3px 6px 0 0; }
+.opt.chosen { border-color:#d8c68a; color:#f4e9c8; background:#1e2130; }
+.opt.chosen::before { content:'✓ '; color:#d8c68a; }
+.snap { font-size: 12.5px; line-height: 2; color:#a8bede; }
+.snap b { color:#c9b87a; font-weight: normal; }
+.flagchips .f { display:inline-block; font-size: 11px; background:#1a2536; border:1px solid #2f4060; color:#9fb2cc; border-radius: 4px; padding: 1px 8px; margin: 2px 4px 0 0; font-family: Menlo, monospace; }
+.rumor { color:#c9a0a8; font-style: italic; font-size: 12.5px; }
+.hidden { display:none !important; }
+.note-big { margin: 60px 0; text-align:center; color:#e8d9a8; font-size: 17px; letter-spacing: 3px; line-height: 2.2; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>通关实录</h1>
+<div class="sub">自动通关真实轨迹（capture_playthrough.py 采集 · 离线规则引擎模式）· <a href="/">▶ 返回游戏</a> · <a href="/code.html">代码结构</a> · <a href="/docs.html">总览图</a></div>
+<div class="stats" id="stats"></div>
+<div class="phasebar" id="phasebar"></div>
+<div class="filters" id="filters"></div>
+<div id="content"><div class="note-big">正在装载轨迹数据……</div></div>
+</div>
+
+<script>
+'use strict';
+const CATS = {
+  all:    { label: '全部',     types: null },
+  story:  { label: '剧情',     types: ['scene_title','beat'] },
+  inputs: { label: '选择与输入', types: ['choice_prompt','free_prompt','input'] },
+  inter:  { label: '幕间与导演', types: ['interlude','action_move','action_wait','scene_enter','save','load','finale'] },
+  world:  { label: '世界快照',  types: ['world','run_begin'] },
+};
+let curFilter = 'all';
+let phaseEls = [];
+
+function esc(s) { const d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+
+function fmtEntry(e) {
+  const step = `<span class="e-step">#${String(e.t).padStart(3,'0')}</span>`;
+  switch (e.type) {
+    case 'scene_title':
+      return `<div class="entry" data-cat="story">${step}<div class="e-text" style="color:#f4e9c8;letter-spacing:3px;">━━ ${esc(e.title)} ━━</div></div>`;
+    case 'beat': {
+      const cls = e.kind === 'narration' ? 'e-narr' : (e.kind === 'me' ? 'e-me' : '');
+      const kindLabel = { narration: '旁白', line: '台词', me: '修二' }[e.kind];
+      const name = e.kind === 'narration' ? '' : `<span class="e-name">${esc(e.name || '修二')}</span>`;
+      const src = e.src ? `<span class="badge-src src-${e.src}">${e.src === 'llm' ? 'LLM' : '规则引擎'}</span>` : '';
+      const act = e.action ? `<div class="e-action">${esc(e.action)}</div>` : '';
+      return `<div class="entry ${cls}" data-cat="story">${step}<div class="e-kind">${kindLabel}${src}</div>${name}<span class="e-text">${esc(e.text)}</span>${act}</div>`;
+    }
+    case 'choice_prompt':
+      return `<div class="entry e-choice" data-cat="inputs">${step}<div class="e-label">◆ 选项出现</div>${(e.options||[]).map(o=>`<span class="opt">${esc(o)}</span>`).join('')}</div>`;
+    case 'free_prompt':
+      return `<div class="entry e-choice" data-cat="inputs">${step}<div class="e-label">◆ 自由输入点</div><div class="e-text" style="font-size:13.5px;color:#a8bede">${esc(e.hint||'')}</div></div>`;
+    case 'input':
+      return `<div class="entry e-choice" data-cat="inputs">${step}<div class="e-label">✑ 玩家输入（${esc(e.mode)}）</div><div class="e-text" style="color:#f0e2b8">「${esc(e.text)}」</div></div>`;
+    case 'interlude': {
+      const offer = e.offer ? `<div style="margin-top:4px"><span style="color:#9fd8a8">▶ 导演层放行：<b>${esc(e.offer_title||e.offer)}</b>（叙事压力达标，可推进剧情）</span></div>` : '';
+      return `<div class="entry e-inter" data-cat="inter">${step}<div class="e-label">幕间</div><div class="e-text" style="font-size:14px;font-style:italic;color:#b8c6da">${esc(e.note||'')}</div>${offer}</div>`;
+    }
+    case 'scene_enter':
+      return `<div class="entry e-inter" data-cat="inter">${step}<div class="e-label">▶ 推进剧情</div><div class="e-text" style="color:#9fd8a8">进入 ${esc(e.title||e.phase)}</div></div>`;
+    case 'action_move':
+      return `<div class="entry e-inter" data-cat="inter">${step}<div class="e-label">幕间行动 · 移动</div><div class="e-text" style="font-size:14px">→ 前往 <b>${esc(e.to)}</b>（自 ${esc(e.from_loc||'')}）</div></div>`;
+    case 'action_wait':
+      return `<div class="entry e-inter" data-cat="inter">${step}<div class="e-label">幕间行动 · 过夜</div><div class="e-text" style="font-size:14px;color:#a8bede">等待 / 过夜：天数推进，八卦引擎离线传播</div></div>`;
+    case 'world': {
+      const s = e.snap || {};
+      const flags = (s.flags||[]).map(f=>`<span class="f">${esc(f)}</span>`).join('');
+      const rumors = (s.rumors||[]).map(r=>`<div class="rumor">〘传闻〙${esc(r.who)}：${esc(r.content)}（${r.hops}手${r.distorted?'·已走样':''}）</div>`).join('');
+      return `<div class="entry e-world" data-cat="world">${step}<div class="e-label">世界快照</div><div class="snap">第 <b>${s.day}</b> 天 ｜ 阶段 <b>${esc(s.phase)}</b> ｜ 地点 <b>${esc(s.location)}</b> ｜ 好感 <b>${s.affection}</b> ｜ 冬祭倒计时 <b>${s.countdown}</b></div><div class="flagchips">${flags}</div>${rumors}${e.note?`<div class="e-action">${esc(e.note)}</div>`:''}</div>`;
+    }
+    case 'save': case 'load':
+      return `<div class="entry e-ctl" data-cat="inter">${step}<div class="e-label">系统</div><div class="e-text" style="font-size:13.5px">${e.type==='save'?'存档':'读档'} → 槽位 ${esc(e.slot)}（快照 + 事件溯源落盘）</div></div>`;
+    case 'finale':
+      return `<div class="entry e-ctl" data-cat="inter">${step}<div class="e-label">终幕</div><div class="e-text" style="color:#e8d9a8">${esc(e.note||'')}</div></div>`;
+    case 'run_begin':
+      return `<div class="entry e-ctl" data-cat="world">${step}<div class="e-label">运行开始</div><div class="e-text" style="font-size:13.5px">${esc(e.note||'')}</div></div>`;
+    default:
+      return '';
+  }
+}
+
+function render(data) {
+  const m = data.meta;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><b>${m.api_calls}</b>API 调用</div>
+    <div class="stat"><b>${m.entries}</b>条记录</div>
+    <div class="stat"><b>${m.phases.length}</b>个阶段</div>
+    <div class="stat"><b>${m.final.day}</b>游戏日</div>
+    <div class="stat"><b>${m.final.affection}</b>最终好感</div>
+    <div class="stat"><b>${m.duration_sec}s</b>全程耗时</div>
+    <div class="stat"><b>${esc(m.generated_at)}</b>采集时间</div>
+    <div class="stat">模式：${esc(m.mode)}${m.llm ? ' · LLM=' + esc(m.llm) : ''}</div>`;
+
+  // 按阶段分组
+  const sections = [];
+  let cur = { phase: 'P1', title: '初遇（开局）', entries: [] };
+  for (const e of data.entries) {
+    if (e.type === 'scene_enter') {
+      sections.push(cur);
+      cur = { phase: e.phase, title: e.title || '', entries: [e] };
+    } else {
+      cur.entries.push(e);
+    }
+  }
+  sections.push(cur);
+
+  // 阶段导航
+  const bar = document.getElementById('phasebar');
+  bar.innerHTML = sections.map((s, i) =>
+    `<button class="chip" data-i="${i}">${esc(s.phase)}</button>`).join('') +
+    `<button class="chip" data-i="-1" id="btn-top">⬆ 顶部</button>`;
+
+  const c = document.getElementById('content');
+  c.innerHTML = sections.map((s, i) => {
+    const phaseEntries = s.entries.filter(e => e.type !== 'scene_enter' || i > 0);
+    const worldSnap = s.entries.find(e => e.type === 'world');
+    const day = worldSnap ? worldSnap.snap.day : '';
+    return `<section id="ph-${i}"><h2 class="ph">${esc(s.phase)}${s.title ? ' · ' + esc(s.title.replace(/^P[\d]+ ·\s*/, '')) : ''}</h2>
+      <div class="ph-sub">${phaseEntries.length} 条记录${day !== '' ? ' · 第 ' + day + ' 天起' : ''}</div>
+      ${phaseEntries.map(fmtEntry).join('')}</section>`;
+  }).join('') + `<div class="note-big">—— 全 11 个阶段 · ${m.api_calls} 次 API 调用 · 通关 ——<br>她一直在等，我一直在逃，雪一直落在两人之间。</div>`;
+
+  // 导航与过滤
+  bar.querySelectorAll('.chip[data-i]').forEach(b => {
+    b.onclick = () => {
+      const i = +b.dataset.i;
+      if (i < 0) window.scrollTo({ top: 0, behavior: 'smooth' });
+      else document.getElementById('ph-' + i).scrollIntoView({ behavior: 'smooth' });
+    };
+  });
+  const fl = document.getElementById('filters');
+  fl.innerHTML = Object.entries(CATS).map(([k, v]) =>
+    `<button class="chip ${k === 'all' ? 'on' : ''}" data-f="${k}">${v.label}</button>`).join('');
+  fl.querySelectorAll('.chip').forEach(b => {
+    b.onclick = () => {
+      curFilter = b.dataset.f;
+      fl.querySelectorAll('.chip').forEach(x => x.classList.toggle('on', x === b));
+      const types = CATS[curFilter].types;
+      document.querySelectorAll('#content .entry').forEach(el => {
+        el.classList.toggle('hidden', types !== null && !types.includes(el.dataset.cat));
+      });
+      document.querySelectorAll('#content section').forEach(sec => {
+        const vis = sec.querySelectorAll('.entry:not(.hidden)').length;
+        sec.classList.toggle('hidden', vis === 0);
+      });
+    };
+  });
+}
+
+fetch('/playthrough_data.json').then(r => r.json()).then(render)
+  .catch(() => { document.getElementById('content').innerHTML =
+    '<div class="note-big">轨迹数据加载失败：请通过游戏服务器访问本页（http://127.0.0.1:8300/playthrough.html）</div>'; });
+</script>
+</body>
+</html>

@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>多结局剧情分支树 · 深雪 ~miyuki~</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "Hiragino Mincho ProN","Songti SC","Noto Serif SC",serif; background:#0c1018; color:#d7dfea; }
+.wrap { max-width: 1700px; margin: 0 auto; padding: 26px 20px 120px; }
+h1 { font-size: 28px; letter-spacing: 8px; color:#f4e9c8; margin: 14px 0 4px; }
+.sub { color:#8fa0ba; font-size:14px; letter-spacing:1px; margin-bottom: 16px; line-height: 1.8; }
+.sub a { color:#d8c68a; }
+.legend { display:flex; flex-wrap:wrap; gap:10px 22px; padding:12px 16px; border:1px solid #223050; border-radius:8px; background:rgba(16,22,36,.7); font-size:13px; margin-bottom:6px; }
+.legend b { color:#f4e9c8; font-weight:normal; }
+.sw { display:inline-block; width:12px; height:12px; border-radius:3px; margin-right:6px; vertical-align:-1px; }
+.chart { background:rgba(10,14,22,.6); border:1px solid #1c2842; border-radius:10px; padding:16px; overflow-x:auto; }
+.mermaid { min-width: 1400px; }
+.foot { color:#5f7090; font-size:12px; margin-top:14px; line-height:1.9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>多结局剧情分支树</h1>
+  <div class="sub">
+    《深雪 ~miyuki~》三轴 · 四结局全景图 ｜ 设计文档：<a href="../设计文档/多结局分支设计.md">设计文档/多结局分支设计.md</a>
+    ｜ 总流程图：<a href="../绘画/游戏流程架构与流程通路.html">游戏流程架构与流程通路.html</a>
+    ｜ 在线流程图：<a href="http://127.0.0.1:8300/flow.html">/flow.html</a>
+    <br>分叉由「三轴打分 + 阈值判定」驱动：自由输入的每一句话都会被模型打分累积三轴；选项可见于所有玩家，但不够阈值的选项会被剧情化拒绝（虚线回落），绝无死路。
+  </div>
+
+  <div class="legend">
+    <span><b>图例：</b></span>
+    <span><span class="sw" style="background:#3a5a8c"></span>主干（P1~P10，9 处选项喂轴）</span>
+    <span><span class="sw" style="background:#8a6d3b"></span>决策点 D0 / D1</span>
+    <span><span class="sw" style="background:#2e7d5b"></span>分支场景</span>
+    <span><span class="sw" style="background:#b8912f"></span>结局（吸收态）</span>
+    <span><span class="sw" style="background:#666"></span>门控落空回落（虚线）</span>
+    <span><b>阈值：</b>羁绊♪≥50 ｜ 山之念▲≥35（入山）／&lt;35（春天） ｜ 现世◇≥35（留京）</span>
+  </div>
+
+  <div class="chart">
+    <pre class="mermaid">
+flowchart TD
+  %% ============ 主干 ============
+  P1["P1 · 初遇<br/>亲戚会议→深雪牵手出院<br/>◇选项：喜欢雪(羁绊+2)／不了解／沉默"]
+  P2["P2 · 清雪<br/>决堤痛哭→深雪拥抱<br/>◇选项：任由抱着(羁绊+3)／挣脱(羁绊+1)"]
+  P3["P3 · 你的姐姐啊<br/>自称姐姐→雪仗<br/>◇选项：骗子／愣住(羁绊+1)<br/>设定 accepted_sister=False"]
+  P4["P4 · 冬祭之夜<br/>参道→神社→背行歌谣<br/>◇选项：放开(现世+1)／让她牵(羁绊+2)"]
+  P5["P5 · 刻身高<br/>炉边谈父母→柱上刻痕<br/>◆关键选项：提父母(山之念+4)／岔开(现世+2)"]
+  P6["P6 · miyuki<br/>送站→拉勾→名字<br/>◇三连选项：问留下(羁绊+2)／问名字(羁绊+2)…"]
+  P7["P7 · 欢迎回家<br/>三年后·空屋重逢<br/>◇选项：追问谜团(山之念+2)／接纳安心(羁绊+3)"]
+  P8["P8 · 老屋的日常<br/>清雪/泡澡/做饭/扑克<br/>◇自由输入打分采样"]
+  P9["P9 · 柱上的痕<br/>再量身高→幸福之辩<br/>◇选项：道歉(羁绊+2)／沉默"]
+  P10["P10 · 齐刘海<br/>雪人画刘海(姐弟仪式)→站台离别<br/>◇选项：姐姐也是(羁绊+2)／没说完整"]
+
+  P1 --> P2 --> P3 --> P4 --> P5 --> P6 --> P7 --> P8 --> P9 --> P10
+
+  %% ============ D0 决策 ============
+  P10 -->|"一年后·叙事压力到位"| P11
+  P11["◆ D0 · P11 一年后的岔路<br/>站台空无一人，她没有来<br/>三选一（全部可见，阈值在点击时判定）"]
+
+  P11 -->|"①先去群山（山之念▲≥35）<br/>山之念+5"| P12M
+  P11 -. "①执念不足→剧情化拒绝<br/>（还没有踏进白色的资格）" .-> P12B
+  P11 -->|"②回到雪国——回到姐姐身边<br/>羁绊+3"| P12B
+  P11 -->|"③留在东京（现世◇≥35）<br/>现世+3"| ETOKYO
+  P11 -. "③现世不足→剧情化拒绝<br/>（笔尖在雪国二字上停住）" .-> P12B
+
+  %% ============ 入山线 ============
+  P12M["P12M · 雪径<br/>寄存行李→夜攀雪径<br/>条件文本：父母之念／风中之声"]
+  P12M -->|"白色身影·熟悉面容"| P0
+  P0["P0 · 白之彼方（终幕）<br/>雪女身影→「修二――――」→雪崩<br/>走向父母等待的地方"]
+
+  %% ============ 归省线 D1 ============
+  P12B["◆ D1 · P12B 田间小路<br/>两行足迹→深雪发问<br/>「小修，觉得现在幸福吗……？」<br/>★原作未答之问由玩家亲口回答（自由输入打分）"]
+
+  P12B -->|"①留在这里（羁绊♪≥50）<br/>羁绊+5"| ESTAY
+  P12B -. "①羁绊不足→深雪轻笑推回<br/>「傻瓜，小修的教室在东京哦」" .-> EFAR
+  P12B -->|"②春天樱花开时再见<br/>（羁绊♪≥50 且 山之念▲<35）"| ESPRING
+  P12B -. "②执念未消→她望向群山<br/>「一定」没能说出口" .-> EFAR
+  P12B -->|"③话没有说完整（兜底）"| EFAR
+
+  %% ============ 结局 ============
+  ESTAY["END_STAY · 炉火与春讯<br/>留守雪国·多煮一个人的饭<br/>「春天来的时候，你还会在吗？」<br/>隐忧：镇上的目光·她倾听山风的停顿"]
+  ESPRING["END_SPRING · 等到花开（真结局）<br/>春假·雪融·樱满枝<br/>「因为约好了呀」<br/>齐刘海描完→accepted_sister=True<br/>群山仍白，但我先看花"]
+  EFAR["END_FAR · 两行足迹<br/>原作向收束·三种变体旁白<br/>（春约落空／留下落空／始终沉默）<br/>她停在原地凝视群山"]
+  ETOKYO["E_TOKYO · 东来的雪<br/>停摆的 4:49 挂钟挂在公寓<br/>人潮中似雪的侧脸<br/>「明年一定」说了很多年"]
+
+  ESTAY --> STAYE(["🏷 END_STAY 炉火与春讯"])
+  ESPRING --> SPRINGE(["🏷 END_SPRING 等到花开"])
+  EFAR --> FARE(["🏷 END_FAR 两行足迹"])
+  ETOKYO --> FARE
+  P0 --> SNOWE(["🏷 END_SNOW 白之彼方"])
+
+  %% ============ 样式 ============
+  classDef trunk fill:#16233c,stroke:#3a5a8c,color:#d7dfea,stroke-width:1.5px;
+  classDef decision fill:#2b2416,stroke:#8a6d3b,color:#f4e9c8,stroke-width:2px;
+  classDef branch fill:#12281f,stroke:#2e7d5b,color:#cfe8dd,stroke-width:1.5px;
+  classDef ending fill:#241f10,stroke:#b8912f,color:#f4e9c8,stroke-width:2.5px;
+  classDef tag fill:#0c1018,stroke:#b8912f,color:#b8912f,stroke-width:1px,stroke-dasharray:3 2;
+  class P1,P2,P3,P4,P5,P6,P7,P8,P9,P10 trunk;
+  class P11,P12B decision;
+  class P12M,ESTAY,ESPRING,EFAR,ETOKYO branch;
+  class P0 ending;
+  class STAYE,SPRINGE,FARE,SNOWE tag;
+    </pre>
+  </div>
+
+  <div class="foot">
+    · 主干 P1~P10 与《人物圣经》时间线一致；所有选项变体（分叉台词）演出后均收束回主干，不产生中途分支。<br>
+    · 三轴初始值：羁绊♪20／山之念▲15／现世◇15；自由输入由模型打分（每轴 -3~+3），离线时按关键词规则打分；状态栏实时显示「心之秤」。<br>
+    · 门控落空不会卡死：D0 落空自动回落「回到雪国」；D1 落空收束进 END_FAR 对应变体。<br>
+    · 四个结局均为吸收态：达成后可在雪国漫游回忆，或从结局卡「开始新的故事」。<br>
+    · 自动化证明：tests/test_branching.py（路由穷举 720 组合 + 五线实机通关 + 门控落空 + 无悬挂）；tests/e2e_playthrough.py（HTTP 全链路通关至结局）。<br>
+    · 谜团锁红线：四个结局均不解答「她是什么／父母是否在山中」——只给氛围与事实，不给谜底。
+  </div>
+</div>
+<script src="../game/web/vendor/mermaid.min.js"></script>
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'dark',
+    flowchart: { curve: 'basis', useMaxWidth: false, htmlLabels: true, rankSpacing: 70, nodeSpacing: 40 },
+    themeVariables: {
+      fontFamily: '"Hiragino Mincho ProN","Songti SC","Noto Serif SC",serif',
+      fontSize: '14px',
+      primaryColor: '#16233c',
+      primaryBorderColor: '#3a5a8c',
+      primaryTextColor: '#d7dfea',
+      lineColor: '#5f7090'
+    }
+  });
+</script>
+</body>
+</html>

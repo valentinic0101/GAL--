@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>深雪 ~miyuki~ · 雪国开放世界 GAL</title>
+<link rel="stylesheet" href="style.css?v=19">
+</head>
+<body>
+
+<!-- ==================== 标题画面 ==================== -->
+<div id="title-screen" class="screen active">
+  <div class="title-bg"></div>
+  <div class="title-snow"></div>
+  <div class="title-content">
+    <div class="game-title">
+      <h1>深雪</h1>
+      <div class="subtitle">— miyuki —</div>
+      <div class="tagline">她一直在等，我一直在逃，雪一直落在两人之间。</div>
+    </div>
+    <div class="title-menu">
+      <button id="btn-new" class="title-btn">开始游戏</button>
+      <button id="btn-continue" class="title-btn">继续旅程</button>
+      <button id="btn-load-title" class="title-btn">读取存档</button>
+    </div>
+    <div class="title-footer">多 Agent 驱动 · 导演层调度 · 八卦传播引擎 · 事件溯源存档</div>
+  </div>
+</div>
+
+<!-- ==================== 游戏主画面 ==================== -->
+<div id="game-screen" class="screen">
+  <div id="bg-layer">
+    <div id="bg-a" class="bg-img"></div>
+    <div id="bg-b" class="bg-img"></div>
+  </div>
+  <div id="snow-overlay"></div>
+  <div id="vignette"></div>
+
+  <div id="bg-note" class="hidden"></div>
+  <div id="sprite-layer"><!-- 立绘由 main.js 按在场名单动态生成 --></div>
+
+  <div id="scene-title-card" class="hidden"><span></span></div>
+
+  <!-- 顶部状态条 -->
+  <div id="status-bar">
+    <span id="st-phase"></span>
+    <span id="st-day"></span>
+    <span id="st-loc"></span>
+    <span id="st-affection"></span>
+    <span id="st-axes" class="axes" title="心之秤：羁绊♪ / 山之念▲ / 现世◇"></span>
+    <span id="st-countdown" class="warn"></span>
+    <span style="margin-left:auto;color:#5a6a88;font-size:11px;">v17</span>
+  </div>
+
+  <!-- 对话框 -->
+  <div id="dialog-box" class="hidden">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+    <div id="nameplate"><span id="name-text"></span></div>
+    <div id="action-text" class="hidden"></div>
+    <div id="dialog-text"></div>
+    <div id="next-indicator">▼</div>
+  </div>
+
+  <!-- 旁白框 -->
+  <div id="narration-box" class="hidden">
+    <div id="narration-text"></div>
+    <div id="next-indicator-n">▼</div>
+  </div>
+
+  <!-- 选项 -->
+  <div id="choice-panel" class="hidden"></div>
+
+  <!-- 自由输入 -->
+  <div id="input-panel" class="hidden">
+    <div class="input-hint" id="input-hint">你想说什么？</div>
+    <div class="input-row">
+      <input id="free-input" type="text" placeholder="自由输入你的话…（回车发送）" autocomplete="off">
+      <button id="btn-send">说</button>
+    </div>
+    <div class="input-quick">
+      <!-- 快捷回答由 main.js renderChips() 按当前帧动态渲染 -->
+    </div>
+  </div>
+
+  <div id="cg-overlay" class="hidden"><img id="cg-img" alt=""></div>
+  <!-- 幕间行动面板 -->
+  <div id="interlude-panel" class="hidden">
+    <div id="ending-card" class="hidden"></div>
+    <div class="inter-note" id="inter-note"></div>
+    <div class="inter-actions">
+      <div class="inter-group" id="move-group"><span class="grp-label">移动</span><div id="move-btns"></div></div>
+      <button id="btn-talk" class="inter-btn">交谈</button>
+      <button id="btn-wait" class="inter-btn">等待 / 过夜</button>
+      <button id="btn-scene-offer" class="inter-btn scene-offer hidden">▶ 推进剧情</button>
+    </div>
+  </div>
+
+  <!-- 系统菜单 -->
+  <div id="menu-bar">
+    <button class="menu-btn" id="btn-bgm" title="背景音乐开/关">♪</button>
+    <button class="menu-btn" id="btn-auto">自动</button>
+    <button class="menu-btn" id="btn-log">日志</button>
+    <button class="menu-btn" id="btn-world">世界</button>
+    <button class="menu-btn" id="btn-save">存档</button>
+    <button class="menu-btn" id="btn-load">读档</button>
+    <button class="menu-btn" id="btn-title">标题</button>
+  </div>
+
+  <!-- 弹窗 -->
+  <div id="modal" class="hidden">
+    <div class="modal-box">
+      <div class="modal-title" id="modal-title"></div>
+      <div class="modal-body" id="modal-body"></div>
+      <button id="modal-close" class="menu-btn">关闭</button>
+    </div>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+
+  <!-- 等待模型回复指示器（右下角，低调） -->
+  <div id="llm-wait">
+    <div class="lw-row">
+      <span class="lw-dot"></span>
+      <span id="lw-text">等待深雪回应</span>
+      <span id="lw-sec">0s</span>
+    </div>
+    <div class="lw-track"><div class="lw-bar"></div></div>
+  </div>
+</div>
+
+<script src="asset_manifest.js?v=19"></script>
+<script src="stage_meta.js?v=19"></script>
+<script src="sprites_meta.js?v=19"></script>
+<script src="main.js?v=19"></script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "apiKey": "cbc4fc980c614d11ab171e991e60d186.idArF5LXtdhnGfge",
+  "baseUrl": "https://open.bigmodel.cn/api/paas/v4",
+  "model": "glm-4.5-flash",
+  "extraBody": { "thinking": { "type": "disabled" } },
+  "timeout": 8,
+  "note": "角色 Agent 真实 LLM 配置（智谱 BigModel，用户 2026-09-15 提供）；删除本文件即回落规则引擎。"
+}

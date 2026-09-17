@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 1000" width="600" height="1000">
+<defs>
+
+</defs>
+<g id="body">
+  <!-- 紫红大衣 -->
+  <path fill="#b04a72" stroke="#2a2430" stroke-width="3"
+    d="M238 336 C 208 366 200 440 208 510 C 216 580 226 660 236 730
+       L 364 730 C 374 660 384 580 392 510 C 400 440 392 366 362 336
+       C 334 318 266 318 238 336 Z"/>
+  <!-- 大衣领 -->
+  <path fill="#93385c" stroke="#2a2430" stroke-width="3" d="M246 332 C 268 356 332 356 354 332
+    C 366 344 364 368 348 378 C 326 368 274 368 252 378 C 236 368 234 344 246 332 Z"/>
+  <path fill="#f2e2ce" stroke="#2a2430" stroke-width="2.5" d="M262 326 L 300 372 L 338 326 L 324 318 L 300 350 L 276 318 Z"/>
+  <!-- 掩嘴的右手 -->
+  <path fill="#b04a72" stroke="#2a2430" stroke-width="3"
+    d="M370 350 C 398 380 404 440 394 490 C 388 522 378 544 362 554
+       L 346 518 C 358 506 364 488 364 460 C 364 424 358 386 348 364 Z"/>
+  <ellipse cx="352" cy="330" rx="26" ry="20" fill="#f2e2ce" stroke="#2a2430" stroke-width="2.5"/>
+  <path fill="none" stroke="#2a2430" stroke-width="2" opacity="0.6" d="M336 324 L 368 324 M334 334 L 370 334"/>
+  <!-- 左臂提包 -->
+  <path fill="#b04a72" stroke="#2a2430" stroke-width="3"
+    d="M230 350 C 202 380 196 440 206 490 C 212 522 222 544 238 554
+       L 254 518 C 242 506 236 488 236 460 C 236 424 242 386 252 364 Z"/>
+  <circle cx="248" cy="558" r="15" fill="#f2e2ce" stroke="#2a2430" stroke-width="2.5"/>
+  <path fill="#8e3d3d" stroke="#2a2430" stroke-width="3" d="M232 560 L 264 560 L 282 640 L 250 640 Z"/>
+  <path fill="none" stroke="#2a2430" stroke-width="4" d="M240 560 C 240 542 256 542 256 560"/>
+  <!-- 裙与鞋 -->
+  <path fill="#8e3a5e" stroke="#2a2430" stroke-width="3" d="M236 728 L 364 728 L 384 920 L 216 920 Z"/>
+  <path fill="#3a2c30" d="M252 918 L 296 918 L 300 948 L 248 948 Z" stroke="#2a2430" stroke-width="2.5"/>
+  <path fill="#3a2c30" d="M348 918 L 304 918 L 300 948 L 352 948 Z" stroke="#2a2430" stroke-width="2.5"/>
+</g><g id="face-base">
+  <path d="M300 312 C 244 308 238 250 238 203.5
+    C 238 162 269 156 300 156
+    C 331 156 362 162 362 203.5
+    C 362 250 356 308 300 312 Z"
+    fill="#f2e2ce" stroke="#2a2430" stroke-width="3"/>
+  <!-- 游移的眼（瞳孔偏一侧+小） -->
+  <path fill="#ffffff" stroke="#2a2430" stroke-width="3"
+    d="M260 244 C 262 228 280 226 284 242
+     C 280 254 264 254 260 244 Z"/>
+  <ellipse cx="270" cy="242" rx="5.5" ry="7" fill="#3a3040"/>
+  <path fill="#ffffff" stroke="#2a2430" stroke-width="3"
+    d="M316 242 C 320 226 338 228 340 244
+     C 336 254 320 254 316 242 Z"/>
+  <ellipse cx="338" cy="242" rx="5.5" ry="7" fill="#3a3040"/>
+  <!-- 眉（挑起） -->
+  <path fill="none" stroke="#4a4038" stroke-width="4" stroke-linecap="round" d="M260 218 C 268 212 278 213 284 216"/>
+  <path fill="none" stroke="#4a4038" stroke-width="4" stroke-linecap="round" d="M316 216 C 322 213 332 212 340 218"/>
+  <!-- 鼻与嘴（被手掩，只露上唇线） -->
+  <path fill="none" stroke="#2a2430" stroke-width="2.4" opacity="0.7" stroke-linecap="round" d="M300 262 l 3 6"/>
+  <path fill="none" stroke="#2a2430" stroke-width="3" stroke-linecap="round" d="M290 282 C 296 279 304 279 310 282"/>
+</g><g id="hair" stroke="#2a2430" stroke-width="3">
+  <!-- 棕色烫发：一圈圆卷 -->
+  <circle cx="248" cy="212" r="20" fill="#7a563c"/><circle cx="256" cy="178" r="21" fill="#7a563c"/>
+  <circle cx="284" cy="158" r="22" fill="#7a563c"/><circle cx="318" cy="158" r="22" fill="#7a563c"/>
+  <circle cx="346" cy="180" r="21" fill="#7a563c"/><circle cx="354" cy="214" r="20" fill="#7a563c"/>
+  <circle cx="242" cy="250" r="17" fill="#7a563c"/><circle cx="360" cy="250" r="17" fill="#7a563c"/>
+  <path fill="#7a563c" d="M242 212 C 244 158 280 138 300 138
+    C 320 138 356 158 358 212
+    C 340 178 260 178 242 212 Z"/>
+  <circle cx="264" cy="190" r="10" fill="#8e6648"/><circle cx="308" cy="170" r="11" fill="#8e6648"/>
+  <circle cx="340" cy="198" r="10" fill="#8e6648"/>
+</g>
+</svg>

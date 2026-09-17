@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>方案 C · 留白（极简文学 NVL）</title>
+<!--
+  方案 C「留白」—— 参考《Florence》《海市蜃楼之馆》与当代极简视觉小说的 NVL 式界面：
+  不用面板、不用边框，用「多段渐变压底 + 大量留白 + 细分隔线」承载文字。
+  设计要点：UI 作为「隐形的助手」，注意力全给叙事与情绪；状态栏在无操作时自动隐去。
+  风险点：素材亮度跨度 30→194，因此压底渐变必须足够厚（最低 0.90 不透明度）才能保证
+  在均值 194 的暴风雪背景上仍有 ≥7:1 对比度 —— 这是本方案唯一的硬约束。
+  DOM 结构与 class 名刻意与 game/web/index.html 保持一致，便于直接移植。
+-->
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#05070a}
+body{
+  font-family:"Hiragino Mincho ProN","Yu Mincho","Songti SC","Noto Serif SC",serif;
+  color:#f2f6fa;
+  /* —— 设计令牌 —— */
+  --text:#f4f7fb;         /* 正文 */
+  --text-2:#c3d0dd;       /* 次要 */
+  --text-3:#8b9aab;       /* 标注 */
+  --ice:#a9c6e2;          /* 唯一强调色：冰蓝 */
+  --hair:rgba(226,238,250,.24);
+  --hair-2:rgba(226,238,250,.12);
+  --scrim:10,14,21;       /* 压底色基 */
+}
+
+.screen{position:fixed;inset:0;display:none}
+.screen.active{display:block}
+
+.snowflake{position:absolute;top:-8vh;border-radius:50%;background:#fff;
+  animation-name:fall;animation-timing-function:linear;animation-iteration-count:infinite;pointer-events:none}
+@keyframes fall{
+  0%{transform:translate(0,-8vh) translateX(0)}
+  25%{transform:translate(4vw,22vh) translateX(1vw)}
+  50%{transform:translate(-3vw,52vh) translateX(-1vw)}
+  75%{transform:translate(3vw,80vh)}
+  100%{transform:translate(-2vw,110vh)}
+}
+
+/* ================================================================
+   ① 标题 —— 底部压底渐变压暗，白字巨型细体
+   ================================================================ */
+#title-screen{background:#05070a}
+.title-bg{position:absolute;inset:0;
+  background:url('../../game/assets/backgrounds/bg_title.png') center/cover no-repeat}
+/* 压底：两段式，底部足够厚（.90）保证白字在均值 166 的雪原上可读 */
+.title-scrim{
+  position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(180deg,
+    rgba(var(--scrim),.62) 0%, rgba(var(--scrim),.30) 22%, rgba(var(--scrim),.10) 42%,
+    rgba(var(--scrim),.46) 62%, rgba(var(--scrim),.82) 84%, rgba(var(--scrim),.94) 100%)}
+.title-snow{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+
+.title-content{position:absolute;left:76px;right:76px;bottom:64px;
+  display:flex;align-items:flex-end;justify-content:space-between;gap:60px}
+
+.game-title{flex:1;min-width:0}
+.game-title .rule{width:74px;height:1px;background:var(--ice);opacity:.9;margin-bottom:26px}
+.game-title h1{
+  font-size:120px;letter-spacing:.06em;font-weight:400;line-height:.96;
+  color:#fbfdff;text-shadow:0 6px 40px rgba(0,0,0,.72)}
+.game-title .subtitle{
+  font-size:15px;letter-spacing:.62em;color:var(--text-3);margin-top:20px;
+  text-transform:uppercase;font-style:normal}
+.game-title .tagline{
+  margin-top:22px;font-size:15px;line-height:2.0;color:var(--text-2);
+  letter-spacing:.12em;max-width:430px}
+
+/* 菜单：纯文本行 + 细下划线，无按钮外观 */
+.title-menu{display:flex;flex-direction:column;gap:0;
+  align-items:flex-end;padding-bottom:6px;min-width:210px}
+.title-btn{
+  position:relative;padding:13px 0;width:100%;text-align:right;
+  font-family:inherit;font-size:17px;letter-spacing:.30em;color:var(--text-2);
+  background:none;border:none;cursor:pointer;transition:color .22s, letter-spacing .22s}
+.title-btn::after{content:'';position:absolute;bottom:0;right:0;height:1px;width:100%;
+  background:var(--hair-2);transition:background .22s, width .22s}
+.title-btn:hover{color:#fff;letter-spacing:.36em}
+.title-btn:hover::after{background:var(--ice);width:100%}
+.title-btn.primary{color:#fff;font-size:18px}
+.title-btn.primary::after{background:var(--ice);opacity:.55}
+.title-btn.primary::before{content:'';position:absolute;bottom:0;right:0;height:1px;width:34px;
+  background:var(--ice)}
+
+.title-footer{position:absolute;left:76px;bottom:22px;font-size:11.5px;
+  letter-spacing:.30em;color:rgba(216,228,242,.80)}
+
+/* ================================================================
+   ② 游戏画面
+   ================================================================ */
+#game-screen{background:#05070a}
+#bg-layer{position:absolute;inset:0}
+.bg-img{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;
+  transition:opacity 1.2s ease}
+.bg-img.show{opacity:1}
+#snow-overlay{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 42%, transparent 46%, rgba(6,10,16,.55) 100%)}
+
+#sprite-layer{position:absolute;inset:0;pointer-events:none}
+.sprite{position:absolute;bottom:0;height:var(--h,74%);left:var(--x,50%);
+  transform:translateX(-50%) scale(var(--s,1));transform-origin:50% 100%;opacity:0;
+  transition:opacity .5s ease,left .6s ease,height .45s ease,bottom .45s ease,transform .45s ease}
+.sprite.on{opacity:1}
+.sprite.speaking{z-index:5}
+.sprite img{height:100%;display:block}
+.sprite .shadow{position:absolute;left:50%;bottom:-2%;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(4,6,10,.85) 0%, rgba(4,6,10,.4) 45%, rgba(4,6,10,0) 72%)}
+/* 旁白时全体立绘轻微退后（意图明确化为一条规则，替代原版靠内联 filter 硬压） */
+#sprite-layer.narrating .sprite img{filter:brightness(.72) saturate(.8)}
+
+/* ================================================================
+   ③ HUD —— 极简：无底色无边框，只有细线与宽字距
+   特性：3 秒无鼠标移动自动淡出（沉浸），移动即回。
+   ================================================================ */
+#hud{
+  position:absolute;top:0;left:0;right:0;z-index:25;
+  display:flex;align-items:center;height:56px;
+  padding:0 74px 0 76px;
+  transition:opacity .8s ease, transform .8s ease}
+/* 顶部压底：实测无压底时，在均值 194 的暴风雪背景上 HUD 对比度只有 1.55 —— 最小化不等于不可读 */
+#hud::before{content:'';position:absolute;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(180deg, rgba(var(--scrim),.78) 0%, rgba(var(--scrim),.74) 64%, rgba(var(--scrim),0) 100%)}
+#hud.idle{opacity:0;transform:translateY(-6px)}
+#status-bar{display:flex;align-items:center;flex:1;min-width:0;
+  font-size:11.5px;letter-spacing:.28em;color:#c2cdd9;
+  text-shadow:0 1px 4px rgba(0,0,0,.8)}
+#status-bar .st{padding:0 18px 0 0;white-space:nowrap}
+#status-bar .st + .st{padding-left:18px;border-left:1px solid var(--hair-2)}
+#status-bar .st-phase{color:var(--text-2);letter-spacing:.34em}
+#status-bar .st-axes{color:#b3c0cd;letter-spacing:.10em;font-size:11px}
+#status-bar .warn{color:var(--ice);letter-spacing:.28em}
+#menu-bar{display:flex;align-items:center;gap:2px}
+.menu-btn{
+  padding:8px 11px;font-family:inherit;font-size:12px;letter-spacing:.26em;
+  color:#c2cdd9;background:none;border:none;cursor:pointer;position:relative;
+  text-shadow:0 1px 4px rgba(0,0,0,.8);transition:color .2s}
+.menu-btn::after{content:'';position:absolute;left:11px;right:11px;bottom:3px;height:1px;
+  background:transparent;transition:background .2s}
+.menu-btn:hover{color:#fff}
+.menu-btn:hover::after{background:var(--ice)}
+.menu-btn.on{color:#fff}
+.menu-btn.on::after{background:var(--ice)}
+.menu-btn.icon{font-size:14px;letter-spacing:0;padding:8px 9px}
+.menu-btn.icon.off{color:#5a6673;text-decoration:line-through}
+
+/* ================================================================
+   ④ 对话框 —— 无面板，厚压底渐变 + 细线
+   修复：原版深蓝半透明框在亮背景上糊、暗背景上分不出边界且靠按钮式边框撑场面。
+   本方案完全不用框，靠「底部 0.94 不透明压底」保证任何背景上的可读性。
+   ================================================================ */
+#dialog-box{
+  position:absolute;left:0;right:0;bottom:0;z-index:20;cursor:pointer;
+  padding:120px 76px 54px;
+  background:linear-gradient(180deg,
+    rgba(var(--scrim),0) 0%, rgba(var(--scrim),.54) 28%, rgba(var(--scrim),.84) 54%,
+    rgba(var(--scrim),.94) 76%, rgba(var(--scrim),.97) 100%);
+  backdrop-filter:blur(2px)}
+/* 正文之上的极细横线：替代框体，作为「文字区」的起点标记 */
+#dialog-box::before{content:'';position:absolute;left:76px;right:76px;bottom:196px;
+  height:1px;background:linear-gradient(90deg, var(--hair) 0%, var(--hair-2) 46%, transparent 100%)}
+#nameplate{
+  position:absolute;left:76px;bottom:212px;padding:0 0 9px;
+  border-bottom:1px solid var(--hair-2);
+  font-size:14px;letter-spacing:.42em;color:#cfe0f2;font-weight:400;
+  text-shadow:0 1px 4px rgba(0,0,0,.92), 0 0 16px rgba(0,0,0,.8)}
+#action-text{font-size:13.5px;color:#aebecf;margin-bottom:10px;line-height:1.8;
+  letter-spacing:.14em;font-style:normal;max-width:920px;
+  text-shadow:0 1px 4px rgba(0,0,0,.85)}
+#dialog-text{font-size:22px;line-height:2.05;letter-spacing:.06em;color:var(--text);
+  min-height:92px;max-width:1000px;text-shadow:0 2px 14px rgba(0,0,0,.5)}
+#next-indicator{position:absolute;right:80px;bottom:20px;color:var(--ice);
+  font-size:12px;animation:bounce 1.6s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0);opacity:.5}50%{transform:translateY(4px);opacity:1}}
+
+/* ================================================================
+   ⑤ 旁白框 —— NVL 全屏式：居中、更宽行距、两侧细线
+   ================================================================ */
+#narration-box{
+  position:absolute;left:0;right:0;bottom:0;z-index:19;cursor:pointer;text-align:center;
+  padding:140px 120px 66px;
+  background:linear-gradient(180deg,
+    rgba(var(--scrim),0) 0%, rgba(var(--scrim),.56) 28%, rgba(var(--scrim),.86) 56%,
+    rgba(var(--scrim),.95) 78%, rgba(var(--scrim),.98) 100%);
+  backdrop-filter:blur(3px)}
+#narration-box::before{content:'';position:absolute;left:50%;bottom:210px;
+  transform:translateX(-50%);width:40px;height:1px;background:var(--ice);opacity:.75}
+#narration-text{font-size:20px;line-height:2.15;color:#e4ecf5;letter-spacing:.08em;
+  font-style:normal;max-width:1020px;margin:0 auto;
+  text-shadow:0 2px 16px rgba(0,0,0,.55)}
+#next-indicator-n{color:var(--ice);font-size:12px;margin-top:22px;animation:bounce 1.6s infinite}
+
+/* ================================================================
+   ⑥ 选项 —— 纯文字居中，细下划线从中心展开
+   ================================================================ */
+#choice-panel{position:absolute;left:50%;bottom:246px;transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:2px;z-index:22;width:min(620px,88vw)}
+.choice-btn{
+  position:relative;padding:15px 20px;font-family:inherit;font-size:17.5px;
+  letter-spacing:.24em;color:var(--text-2);text-align:center;cursor:pointer;
+  background:none;border:none;transition:color .24s, letter-spacing .24s}
+.choice-btn::after{content:'';position:absolute;left:50%;bottom:4px;transform:translateX(-50%);
+  width:calc(100% - 40px);height:1px;background:var(--hair-2);transition:background .24s}
+.choice-btn:hover{color:#fff;letter-spacing:.30em}
+.choice-btn:hover::after{background:var(--ice)}
+.choice-btn.free{font-size:15px;color:var(--text-3)}
+
+/* ================================================================
+   ⑦ 幕间 / 自由输入
+   ================================================================ */
+#interlude-panel{position:absolute;left:0;right:0;bottom:0;z-index:21;
+  padding:110px 76px 48px;
+  background:linear-gradient(180deg,
+    rgba(var(--scrim),0) 0%, rgba(var(--scrim),.44) 30%, rgba(var(--scrim),.84) 60%,
+    rgba(var(--scrim),.95) 100%);
+  backdrop-filter:blur(2px)}
+.inter-note{font-size:16px;color:var(--text-2);line-height:2.0;letter-spacing:.10em;
+  margin-bottom:20px;max-width:840px}
+.inter-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inter-btn{padding:10px 4px;font-family:inherit;font-size:15px;letter-spacing:.24em;
+  color:var(--text-2);background:none;border:none;border-bottom:1px solid var(--hair-2);
+  cursor:pointer;margin-right:22px;transition:color .22s, border-color .22s}
+.inter-btn:hover{color:#fff;border-bottom-color:var(--ice)}
+.inter-btn.scene-offer{color:#fff;border-bottom-color:var(--ice)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.62}}
+.inter-btn.scene-offer{animation:pulse 1.8s infinite}
+.inter-group{display:flex;gap:6px;align-items:center}
+.grp-label{font-size:11px;letter-spacing:.30em;color:var(--text-3);margin-right:8px}
+#move-btns{display:flex;gap:0}
+.move-btn{font-family:inherit;font-size:13.5px;letter-spacing:.14em;color:var(--text-3);
+  cursor:pointer;padding:8px 14px;background:none;border:none;border-bottom:1px solid var(--hair-2);
+  transition:color .2s, border-color .2s}
+.move-btn:hover{color:var(--ice);border-bottom-color:var(--ice)}
+
+#input-panel{position:absolute;left:0;right:0;bottom:0;z-index:22;
+  padding:96px 76px 44px;
+  background:linear-gradient(180deg,
+    rgba(var(--scrim),0) 0%, rgba(var(--scrim),.46) 30%, rgba(var(--scrim),.86) 62%,
+    rgba(var(--scrim),.96) 100%)}
+.input-hint{font-size:13.5px;letter-spacing:.26em;color:var(--ice);margin-bottom:16px}
+.input-row{display:flex;gap:14px;max-width:840px}
+#free-input{flex:1;padding:12px 2px;font-size:18px;font-family:inherit;color:#fff;
+  background:none;border:none;border-bottom:1px solid var(--hair);outline:none;
+  letter-spacing:.06em;transition:border-color .22s}
+#free-input::placeholder{color:rgba(190,205,222,.38)}
+#free-input:focus{border-bottom-color:var(--ice)}
+#btn-send{padding:0 8px;font-family:inherit;font-size:15px;letter-spacing:.24em;
+  color:var(--ice);background:none;border:none;border-bottom:1px solid var(--ice);
+  cursor:pointer;transition:color .2s}
+#btn-send:hover{color:#fff}
+.input-quick{display:flex;gap:18px;margin-top:18px;flex-wrap:wrap}
+.quick{font-family:inherit;font-size:13px;letter-spacing:.16em;color:var(--text-3);
+  background:none;border:none;border-bottom:1px dashed var(--hair-2);
+  padding:4px 0;cursor:pointer;transition:color .2s, border-color .2s}
+.quick:hover{color:var(--ice);border-bottom-color:var(--ice)}
+
+/* ================================================================
+   ⑧ 弹窗 —— 唯一的「实体」：极简墨纸感黑底，无边框，只有细线
+   ================================================================ */
+#modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;
+  justify-content:center;background:rgba(5,7,10,.82);backdrop-filter:blur(7px)}
+.modal-box{width:min(720px,92vw);max-height:82vh;overflow:auto;
+  padding:32px 40px;background:rgba(11,15,22,.96);
+  border-top:1px solid var(--hair);border-bottom:1px solid var(--hair)}
+.modal-title{font-size:14px;letter-spacing:.52em;color:var(--ice);
+  margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--hair-2)}
+.modal-body{font-size:15px;line-height:2.1;color:var(--text-2);letter-spacing:.04em}
+.save-slot{margin-bottom:4px}
+.log-item{padding:11px 0;border-bottom:1px solid var(--hair-2)}
+.log-item .log-name{color:var(--ice);margin-right:12px}
+.log-item.narration{color:var(--text-3)}
+.world-kv{margin:8px 0}
+.world-kv b{color:var(--ice);font-weight:400;letter-spacing:.10em}
+.rumor{color:#b098a4}
+/* 存档槽：无卡片，纯列表行 */
+.slot-card{display:flex;align-items:baseline;gap:20px;padding:16px 0;
+  border-bottom:1px solid var(--hair-2);transition:padding-left .22s}
+.slot-card:hover{padding-left:10px}
+.slot-no{font-size:15px;letter-spacing:.20em;color:var(--ice);flex:0 0 46px}
+.slot-meta{flex:1;min-width:0}
+.slot-meta .s-title{font-size:15px;color:var(--text);letter-spacing:.08em}
+.slot-meta .s-sub{font-size:12px;color:var(--text-3);margin-top:5px;letter-spacing:.12em}
+.slot-act .inter-btn{font-size:13.5px;margin-right:0;padding:6px 2px}
+
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:16px 0;border-bottom:1px solid var(--hair-2)}
+.set-row:last-child{border-bottom:none}
+.set-label{font-size:14.5px;color:var(--text);letter-spacing:.10em}
+.set-label small{display:block;font-size:11.5px;color:var(--text-3);
+  margin-top:5px;letter-spacing:.10em}
+.set-ctl{display:flex;gap:20px;align-items:center}
+.seg{display:flex;gap:20px}
+.seg button{font-family:inherit;font-size:13px;letter-spacing:.20em;color:var(--text-3);
+  background:none;border:none;border-bottom:1px solid transparent;
+  padding:5px 0;cursor:pointer;transition:all .2s}
+.seg button.on{color:var(--ice);border-bottom-color:var(--ice)}
+.vol-track{position:relative;width:150px;height:1px;background:var(--hair)}
+.vol-fill{position:absolute;left:0;top:0;height:100%;width:62%;background:var(--ice)}
+.vol-knob{position:absolute;top:50%;left:62%;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;
+  border-radius:50%;background:var(--ice);box-shadow:0 0 12px rgba(169,198,226,.8)}
+
+#toast{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:60;
+  padding:11px 30px;font-size:14px;letter-spacing:.24em;color:#fff;
+  background:rgba(8,11,16,.9);border-bottom:1px solid var(--ice)}
+
+#llm-wait{position:fixed;right:76px;bottom:26px;z-index:40;width:180px;
+  pointer-events:none}
+.lw-row{display:flex;align-items:center;gap:9px;margin-bottom:8px}
+.lw-dot{width:4px;height:4px;border-radius:50%;background:var(--ice);
+  animation:lwpulse 1.6s ease-in-out infinite}
+@keyframes lwpulse{0%,100%{opacity:.22;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+#lw-text{font-size:11px;letter-spacing:.26em;color:var(--text-3);flex:1}
+#lw-sec{font-size:10.5px;color:#6f7d8d;font-family:Menlo,monospace}
+.lw-track{height:1px;background:var(--hair-2);overflow:hidden}
+.lw-bar{height:100%;width:34%;background:linear-gradient(90deg,transparent,var(--ice),transparent);
+  animation:lwslide 2s linear infinite}
+@keyframes lwslide{0%{transform:translateX(-110%)}100%{transform:translateX(410%)}}
+
+#scene-title-card{position:absolute;inset:0;z-index:30;display:flex;align-items:center;
+  justify-content:center;background:rgba(5,7,10,.72);pointer-events:none}
+#scene-title-card span{font-size:38px;letter-spacing:.52em;text-indent:.52em;color:#eef4fa;
+  font-weight:400;text-shadow:0 0 40px rgba(140,180,225,.6)}
+
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<!-- ============ ① 标题 ============ -->
+<div id="title-screen" class="screen active">
+  <div class="title-bg"></div>
+  <div class="title-scrim"></div>
+  <div class="title-snow" id="title-snow"></div>
+  <div class="title-content">
+    <div class="game-title">
+      <div class="rule"></div>
+      <h1>深雪</h1>
+      <div class="subtitle">miyuki</div>
+      <div class="tagline">她一直在等，我一直在逃，<br>雪一直落在两人之间。</div>
+    </div>
+    <div class="title-menu">
+      <button class="title-btn primary">开始游戏</button>
+      <button class="title-btn">继续旅程</button>
+      <button class="title-btn">读取存档</button>
+      <button class="title-btn">设　　置</button>
+    </div>
+  </div>
+  <div class="title-footer">雪国奇谭 · 第一部　ver 1.0</div>
+</div>
+
+<!-- ============ ② 游戏画面 ============ -->
+<div id="game-screen" class="screen">
+  <div id="bg-layer">
+    <div id="bg-a" class="bg-img show"></div>
+    <div id="bg-b" class="bg-img"></div>
+  </div>
+  <div id="snow-overlay"></div>
+  <div id="vignette"></div>
+  <div id="sprite-layer"></div>
+
+  <div id="hud">
+    <div id="status-bar">
+      <span class="st st-phase">P1 · 初遇</span>
+      <span class="st">第 1 天</span>
+      <span class="st">老屋 · 客厅</span>
+      <span class="st">深雪 50</span>
+      <span class="st st-axes">羁绊♪20　山之念▲15　现世◇15</span>
+      <span class="st warn">冬祭还有 3 天</span>
+    </div>
+    <div id="menu-bar">
+      <button class="menu-btn icon" title="背景音乐">♫</button>
+      <button class="menu-btn">自动</button>
+      <button class="menu-btn">日志</button>
+      <button class="menu-btn">世界</button>
+      <button class="menu-btn">存档</button>
+      <button class="menu-btn">读档</button>
+      <button class="menu-btn">设置</button>
+      <button class="menu-btn">标题</button>
+    </div>
+  </div>
+
+  <div id="dialog-box" class="hidden">
+    <div id="nameplate"><span id="name-text">深雪</span></div>
+    <div id="action-text">（得到解放的她像肋下生出了双翅，在这片凄清冷寂的天地中欢快地奔走）</div>
+    <div id="dialog-text">呐，你喜欢雪吗？</div>
+    <div id="next-indicator">▼</div>
+  </div>
+
+  <div id="narration-box" class="hidden">
+    <div id="narration-text">亲戚们总是将简单的道理，说得很拐弯抹角。他们围绕着同一个话题，商议了好几个小时——在亲戚中，到底由谁来收养我。必须有人来抽到这个下下签。</div>
+    <div id="next-indicator-n">▼</div>
+  </div>
+
+  <div id="choice-panel" class="hidden">
+    <button class="choice-btn">……我喜欢这雪</button>
+    <button class="choice-btn">我…不了解…</button>
+    <button class="choice-btn">（长久地沉默）</button>
+    <button class="choice-btn free">✎　自由输入想说的话…</button>
+  </div>
+
+  <div id="interlude-panel" class="hidden">
+    <div class="inter-note">雪还在下。距冬祭还有三天。</div>
+    <div class="inter-actions">
+      <div class="inter-group"><span class="grp-label">移动</span>
+        <div id="move-btns">
+          <button class="move-btn">老屋 · 庭院</button>
+          <button class="move-btn">镇上街道</button>
+          <button class="move-btn">神社</button>
+        </div>
+      </div>
+      <button class="inter-btn">交谈</button>
+      <button class="inter-btn">等待 / 过夜</button>
+      <button class="inter-btn scene-offer">▶ 推进剧情：清雪</button>
+    </div>
+  </div>
+
+  <div id="llm-wait">
+    <div class="lw-row"><span class="lw-dot"></span><span id="lw-text">等待深雪回应</span><span id="lw-sec">2s</span></div>
+    <div class="lw-track"><div class="lw-bar"></div></div>
+  </div>
+</div>
+
+<!-- ============ ⑧ 存档 / 菜单弹窗 ============ -->
+<div id="modal" class="hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">读 档</div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const BG = {
+  corridor: '../../game/assets/backgrounds/bg_oldhouse_corridor.png',
+  blizzard: '../../game/assets/backgrounds/bg_mountains_blizzard.png',
+  courtyard: '../../game/assets/backgrounds/bg_courtyard.png',
+  festival: '../../game/assets/backgrounds/bg_town_night_festival.png',
+};
+const SPR = {
+  miyuki:  '../../game/assets/sprites/miyuki_smile.png',
+  miyukiN: '../../game/assets/sprites/miyuki_normal.png',
+  shuuji:  '../../game/assets/sprites/shuuji_child.png',
+  man:     '../../game/assets/sprites/relative_man.png',
+  woman:   '../../game/assets/sprites/relative_woman.png',
+};
+function setSprites(list, sceneLight = 1) {
+  const layer = document.getElementById('sprite-layer');
+  layer.innerHTML = '';
+  const n = list.length;
+  const xs = n === 1 ? [.62] : n === 2 ? [.26, .74] : [.13, .46, .79];
+  list.forEach((sp, i) => {
+    const box = document.createElement('div');
+    box.className = 'sprite on' + (sp.speak ? ' speaking' : '');
+    box.style.setProperty('--x', (xs[i] * 100) + '%');
+    box.style.height = (sp.h || 74) + '%';
+    const img = document.createElement('img');
+    img.src = sp.src;
+    img.style.filter = `brightness(${((sp.speak ? 1 : .88) * sceneLight).toFixed(2)}) contrast(1.02)`;
+    box.appendChild(img);
+    const sh = document.createElement('div'); sh.className = 'shadow'; box.appendChild(sh);
+    layer.appendChild(box);
+  });
+  layer.classList.toggle('narrating', list.length > 0 && !list.some(s => s.speak));
+}
+function setBg(url, dim) {
+  const a = document.getElementById('bg-a');
+  a.style.backgroundImage = `url('${url}')`;
+  a.style.filter = dim ? `brightness(${dim})` : '';
+}
+/* 雪：加大加亮（原版 2–7px / 35–90% 在暗底上几乎不可见） */
+function snow(id, n) {
+  const el = document.getElementById(id);
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const s = 2.5 + Math.random() * 6.5, l = Math.random() * 100,
+          d = 8 + Math.random() * 14, del = -Math.random() * 20, o = .45 + Math.random() * .5;
+    h += `<div class="snowflake" style="left:${l}vw;width:${s}px;height:${s}px;opacity:${o};animation-duration:${d}s;animation-delay:${del}s"></div>`;
+  }
+  el.innerHTML = h;
+}
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const title = document.getElementById('title-screen');
+  const game = document.getElementById('game-screen');
+  ['dialog-box','narration-box','choice-panel','interlude-panel']
+    .forEach(i => document.getElementById(i).classList.add('hidden'));
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('llm-wait').style.display = 'none';
+  if (name === 'title') { title.classList.add('active'); return; }
+  game.classList.add('active');
+  if (name === 'dialog') {
+    setBg(BG.blizzard, .96);
+    setSprites([{ src: SPR.miyuki, speak: true, h: 78 }, { src: SPR.shuuji, speak: false, h: 68 }], .98);
+    document.getElementById('dialog-box').classList.remove('hidden');
+  } else if (name === 'dialog_dark') {
+    setBg(BG.corridor, 1);
+    setSprites([{ src: SPR.shuuji, speak: false, h: 66 },
+                { src: SPR.man, speak: true, h: 72 },
+                { src: SPR.woman, speak: false, h: 73 }], 1.18);
+    document.getElementById('dialog-box').classList.remove('hidden');
+    document.getElementById('name-text').textContent = '叔父';
+    document.getElementById('action-text').textContent = '（他推了推眼镜，视线游移开）';
+    document.getElementById('dialog-text').textContent = '麻烦呐——';
+  } else if (name === 'narration') {
+    setBg(BG.corridor, 1); setSprites([], 1);
+    document.getElementById('narration-box').classList.remove('hidden');
+  } else if (name === 'choice') {
+    setBg(BG.courtyard, .98);
+    setSprites([{ src: SPR.miyukiN, speak: true, h: 74 }], .98);
+    document.getElementById('choice-panel').classList.remove('hidden');
+  } else if (name === 'save') {
+    setBg(BG.festival, 1);
+    setSprites([{ src: SPR.miyuki, speak: false, h: 70 }], 1);
+    document.getElementById('modal-title').textContent = '读 档';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="slot-card"><div class="slot-no">一</div>
+        <div class="slot-meta"><div class="s-title">P2 · 清雪之后</div>
+          <div class="s-sub">第 2 天　老屋 · 庭院　深雪 58　冬祭还有 2 天</div></div>
+        <div class="slot-act"><button class="inter-btn">读取</button></div></div>
+      <div class="slot-card"><div class="slot-no">二</div>
+        <div class="slot-meta"><div class="s-title">P3 · 冬祭前夜</div>
+          <div class="s-sub">第 3 天　镇上街道　深雪 66　冬祭还有 1 天</div></div>
+        <div class="slot-act"><button class="inter-btn">读取</button></div></div>
+      <div class="slot-card"><div class="slot-no">三</div>
+        <div class="slot-meta"><div class="s-title">尚未保存</div>
+          <div class="s-sub">空档位</div></div>
+        <div class="slot-act"><button class="inter-btn">保存</button></div></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+  } else if (name === 'settings') {
+    setBg(BG.festival, 1);
+    setSprites([], 1);
+    document.getElementById('modal-title').textContent = '设 置';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="set-row"><div class="set-label">文字速度<small>打字机逐字显示的速度</small></div>
+        <div class="set-ctl"><div class="seg"><button>慢</button><button class="on">标准</button><button>快</button><button>瞬间</button></div></div></div>
+      <div class="set-row"><div class="set-label">背景音乐<small>当前：冬日小镇</small></div>
+        <div class="set-ctl"><div class="vol-track"><div class="vol-fill"></div><div class="vol-knob"></div></div></div></div>
+      <div class="set-row"><div class="set-label">自动播放间隔<small>自动模式下每句停留时间</small></div>
+        <div class="set-ctl"><div class="seg"><button class="on">1.4 秒</button><button>2.4 秒</button><button>4.0 秒</button></div></div></div>
+      <div class="set-row"><div class="set-label">飘雪与特效<small>关闭可提升低配设备帧率</small></div>
+        <div class="set-ctl"><div class="seg"><button class="on">开</button><button>关</button></div></div></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+  } else if (name === 'interlude') {
+    setBg(BG.festival, 1); setSprites([], 1);
+    document.getElementById('interlude-panel').classList.remove('hidden');
+    document.getElementById('llm-wait').style.display = '';
+  }
+}
+snow('title-snow', 54);
+snow('snow-overlay', 90);
+show((location.hash || '#title').slice(1));
+/* HUD 自动隐去：首次鼠标移动后开始 3.2s 计时 */
+let idleTimer = null;
+function armIdle() {
+  const hud = document.getElementById('hud');
+  hud.classList.remove('idle');
+  clearTimeout(idleTimer);
+  idleTimer = setTimeout(() => hud.classList.add('idle'), 3200);
+}
+window.addEventListener('mousemove', armIdle);
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+</script>
+</body>
+</html>

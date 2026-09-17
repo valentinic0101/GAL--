@@ -1,0 +1,62 @@
+{
+ "miyuki_normal.png": {
+  "foot": 0.0039,
+  "content_top": 0.0078,
+  "w": 1024,
+  "h": 1536
+ },
+ "miyuki_sad.png": {
+  "foot": 0.0046,
+  "content_top": 0.0078,
+  "w": 1024,
+  "h": 1536
+ },
+ "miyuki_smile.png": {
+  "foot": 0.0039,
+  "content_top": 0.0059,
+  "w": 1024,
+  "h": 1536
+ },
+ "miyuki_surprise.png": {
+  "foot": 0.0039,
+  "content_top": 0.0072,
+  "w": 1024,
+  "h": 1536
+ },
+ "miyuki_white.png": {
+  "foot": 0.0,
+  "content_top": 0.0,
+  "w": 1024,
+  "h": 1536
+ },
+ "relative_man.png": {
+  "foot": 0.0124,
+  "content_top": 0.0137,
+  "w": 1024,
+  "h": 1536
+ },
+ "relative_woman.png": {
+  "foot": 0.0124,
+  "content_top": 0.0098,
+  "w": 1024,
+  "h": 1536
+ },
+ "shuuji_child.png": {
+  "foot": 0.0208,
+  "content_top": 0.0208,
+  "w": 1024,
+  "h": 1536
+ },
+ "shuuji_teen.png": {
+  "foot": 0.0059,
+  "content_top": 0.0059,
+  "w": 1024,
+  "h": 1536
+ },
+ "toba.png": {
+  "foot": 0.0169,
+  "content_top": 0.0208,
+  "w": 1024,
+  "h": 1536
+ }
+}

@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>方案 B · 灯条（香草社平面设计派）</title>
+<!--
+  方案 B「灯条」—— 参考 Vanillaware《十三机兵防卫圈》的平面设计派 UI：
+  硬边斜切角、橙白高对比、等宽数字、杂志式信息网格、无衬线字体。
+  设计要点：以「近黑实体面板 + 单一橙色强调」保证素材亮度 30→194 全域可读；
+  信息用大号编号与细分隔线建立层级，取代原版靠字色深浅区分层级的做法。
+  DOM 结构与 class 名刻意与 game/web/index.html 保持一致，便于直接移植。
+-->
+<style>
+*{margin:0;padding:0;box-sizing:border-box;user-select:none}
+html,body{width:100%;height:100%;overflow:hidden;background:#07080a}
+body{
+  font-family:"PingFang SC","Hiragino Sans GB","Noto Sans SC","Helvetica Neue",Arial,sans-serif;
+  color:#fff;
+  /* —— 设计令牌 —— */
+  --ink:#07080a;          /* 近黑面板 */
+  --ink-2:#12151a;        /* 面板渐层 */
+  --white:#ffffff;
+  --grey:#98a1ad;         /* 次要文字 */
+  --grey-2:#5d666f;       /* 更次 */
+  --orange:#ff6a1a;       /* 唯一强调色 */
+  --orange-d:#c94c0c;
+  --line:rgba(255,255,255,.17);
+  --line-2:rgba(255,255,255,.09);
+  --mono:"SF Mono",Menlo,Consolas,monospace;
+  --bevel:14px;           /* 斜切角尺寸 */
+}
+
+.screen{position:fixed;inset:0;display:none}
+.screen.active{display:block}
+
+.snowflake{position:absolute;top:-8vh;border-radius:50%;background:#fff;
+  animation-name:fall;animation-timing-function:linear;animation-iteration-count:infinite;pointer-events:none}
+@keyframes fall{
+  0%{transform:translate(0,-8vh) translateX(0)}
+  25%{transform:translate(4vw,22vh) translateX(1vw)}
+  50%{transform:translate(-3vw,52vh) translateX(-1vw)}
+  75%{transform:translate(3vw,80vh)}
+  100%{transform:translate(-2vw,110vh)}
+}
+
+/* ================================================================
+   ① 标题 —— 左侧「杂志封面」式近黑竖版
+   修复：原版标题用近白字压在均值 166 的亮雪原上（对比度 2.4:1）。
+   本方案把标题与菜单装进近黑实体竖版，白字对比度 ≈ 19:1。
+   ================================================================ */
+#title-screen{background:#07080a}
+.title-bg{position:absolute;inset:0;
+  background:url('../../game/assets/backgrounds/bg_title.png') center/cover no-repeat}
+.title-snow{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+
+.title-content{
+  position:absolute;top:0;bottom:0;left:0;width:min(560px,48vw);
+  display:flex;flex-direction:column;justify-content:center;padding:0 0 0 68px;
+  background:linear-gradient(102deg, rgba(7,8,10,.97) 0%, rgba(7,8,10,.95) 62%, rgba(7,8,10,.72) 88%, rgba(7,8,10,0) 100%)}
+/* 左侧橙色索引条 */
+.title-content::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;
+  background:linear-gradient(180deg,var(--orange) 0%, #ff9a4d 50%, var(--orange-d) 100%)}
+
+.game-title{position:relative}
+.game-title .idx{
+  font-family:var(--mono);font-size:12px;letter-spacing:.30em;color:var(--orange);
+  display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.game-title .idx::after{content:'';flex:1;height:1px;background:var(--line)}
+.game-title h1{
+  font-size:88px;letter-spacing:.10em;font-weight:700;line-height:1.2;
+  color:#fff;text-shadow:0 0 46px rgba(255,106,26,.30)}
+.game-title .subtitle{
+  font-family:var(--mono);font-size:15px;letter-spacing:.44em;color:var(--grey);
+  margin-top:16px;text-transform:uppercase}
+.game-title .tagline{
+  margin-top:26px;font-size:13.5px;line-height:1.95;color:#c8d0da;
+  letter-spacing:.10em;padding-left:14px;border-left:2px solid var(--orange);max-width:400px}
+
+.title-menu{display:flex;flex-direction:column;gap:0;margin-top:38px;border-top:1px solid var(--line)}
+.title-btn{
+  display:flex;align-items:center;gap:16px;padding:15px 22px;width:min(400px,100%);
+  font-size:16px;font-family:inherit;font-weight:500;letter-spacing:.24em;
+  color:#e8edf3;background:transparent;border:none;border-bottom:1px solid var(--line-2);
+  cursor:pointer;text-align:left;transition:background .18s, color .18s, padding-left .18s}
+.title-btn .no{font-family:var(--mono);font-size:12px;color:var(--grey-2);letter-spacing:0;
+  transition:color .18s}
+.title-btn:hover{background:var(--orange);color:#0a0c0f;padding-left:30px}
+.title-btn:hover .no{color:rgba(10,12,15,.6)}
+.title-btn.primary{color:#fff}
+.title-btn.primary .no{color:var(--orange)}
+.title-btn.primary:hover .no{color:rgba(10,12,15,.6)}
+.title-btn.disabled{color:var(--grey-2);cursor:not-allowed}
+.title-btn.disabled:hover{background:transparent;color:var(--grey-2);padding-left:22px}
+.title-btn.disabled:hover .no{color:var(--grey-2)}
+
+.title-footer{position:absolute;left:68px;bottom:26px;font-family:var(--mono);font-size:11px;
+  letter-spacing:.24em;color:#8c959f}
+
+/* ================================================================
+   ② 游戏画面
+   ================================================================ */
+#game-screen{background:#07080a}
+#bg-layer{position:absolute;inset:0}
+.bg-img{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;
+  transition:opacity 1.1s ease}
+.bg-img.show{opacity:1}
+#snow-overlay{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#vignette{position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(ellipse at center, transparent 56%, rgba(6,8,12,.5) 100%)}
+
+#sprite-layer{position:absolute;inset:0;pointer-events:none}
+.sprite{position:absolute;bottom:0;height:var(--h,74%);left:var(--x,50%);
+  transform:translateX(-50%) scale(var(--s,1));transform-origin:50% 100%;opacity:0;
+  transition:opacity .45s ease,left .55s ease,height .4s ease,bottom .4s ease,transform .4s ease}
+.sprite.on{opacity:1}
+.sprite.speaking{z-index:5}
+.sprite img{height:100%;display:block}
+.sprite .shadow{position:absolute;left:50%;bottom:-2%;transform:translateX(-50%);border-radius:50%;
+  background:radial-gradient(ellipse at center, rgba(4,6,10,.9) 0%, rgba(4,6,10,.45) 45%, rgba(4,6,10,0) 72%)}
+
+/* ================================================================
+   ③ HUD —— 单条信息网格，等宽数字，橙色光标
+   修复：原版两条横条不统一 / ♪ 一号三义 / v17 调试串被菜单挡住。
+   ================================================================ */
+#hud{
+  position:absolute;top:0;left:0;right:0;z-index:25;height:46px;
+  display:flex;align-items:stretch;
+  background:linear-gradient(180deg, rgba(7,8,10,.95), rgba(7,8,10,.86));
+  border-bottom:1px solid var(--line);backdrop-filter:blur(8px)}
+#hud::before{content:'';width:5px;flex:0 0 5px;background:var(--orange)}
+#status-bar{display:flex;align-items:center;flex:1;min-width:0;padding-left:18px;
+  font-size:12px;letter-spacing:.14em;color:var(--grey)}
+#status-bar .st{display:flex;align-items:center;height:100%;padding:0 14px;white-space:nowrap}
+#status-bar .st + .st{border-left:1px solid var(--line-2)}
+#status-bar .st b{font-family:var(--mono);color:#fff;font-weight:400;font-size:13px;margin-left:6px;letter-spacing:0}
+#status-bar .st-phase{color:#fff;font-weight:600;letter-spacing:.20em}
+#status-bar .st-axes{font-size:11.5px;letter-spacing:.06em;color:#7d868f}
+#status-bar .warn{color:var(--orange);font-weight:600;letter-spacing:.14em}
+#menu-bar{display:flex;align-items:center;gap:2px;padding:0 14px}
+.menu-btn{
+  padding:7px 12px;font-size:12px;font-family:inherit;color:#b9c2cc;cursor:pointer;
+  background:transparent;border:1px solid transparent;letter-spacing:.18em;
+  transition:all .16s}
+.menu-btn:hover{background:var(--orange);border-color:var(--orange);color:#0a0c0f;font-weight:600}
+.menu-btn.on{border-color:var(--orange);color:var(--orange)}
+.menu-btn.icon{font-size:14px;letter-spacing:0;padding:7px 10px;font-family:var(--mono)}
+.menu-btn.icon.off{color:var(--grey-2);text-decoration:line-through}
+
+/* ================================================================
+   ④ 对话框 —— 近黑硬边 + 斜切角 + 橙色侧条
+   ================================================================ */
+/* 面板视觉层放在 ::before —— 本体不裁剪，外挂的名字牌才不会被 clip-path 一起切掉
+   （实测：本体加 clip-path 时 #nameplate 对比度仅 1.78，等于名字牌根本没画出来） */
+#dialog-box{
+  position:absolute;left:50%;bottom:30px;transform:translateX(-50%);
+  width:min(1080px,92vw);min-height:184px;z-index:20;cursor:pointer;
+  padding:26px 42px 24px 44px;background:none;border:none;box-shadow:none}
+#dialog-box::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(100deg, rgba(7,8,10,.965) 0%, rgba(16,19,24,.955) 100%);
+  border:1px solid rgba(255,255,255,.20);border-left:5px solid var(--orange);
+  clip-path:polygon(var(--bevel) 0, 100% 0, 100% calc(100% - var(--bevel)), calc(100% - var(--bevel)) 100%, 0 100%, 0 var(--bevel));
+  box-shadow:0 16px 46px rgba(0,0,0,.62);backdrop-filter:blur(9px)}
+/* 顶部刻度线：呼应「灯条」主题 */
+#dialog-box::after{content:'';position:absolute;top:0;left:var(--bevel);right:0;height:1px;
+  background:repeating-linear-gradient(90deg, rgba(255,106,26,.55) 0 12px, transparent 12px 24px)}
+/* 名字牌压在面板上方，且自己带一层描边保证与背景分离 */
+#nameplate{
+  position:absolute;top:-33px;left:0;padding:8px 22px;z-index:2;
+  background:#fff;color:#0a0c0f;font-size:17px;font-weight:700;letter-spacing:.20em;
+  clip-path:polygon(0 0, 100% 0, calc(100% - 12px) 100%, 0 100%);
+  box-shadow:0 6px 18px rgba(0,0,0,.55)}
+#action-text{font-size:13px;color:var(--grey);margin-bottom:9px;line-height:1.7;
+  letter-spacing:.08em;font-style:normal}
+#dialog-text{font-size:20.5px;line-height:1.88;letter-spacing:.03em;color:#fff;min-height:80px}
+#next-indicator{position:absolute;right:26px;bottom:12px;color:var(--orange);
+  font-size:12px;animation:bounce 1.2s infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(4px)}}
+
+/* ================================================================
+   ⑤ 旁白框 —— 与对话框同几何，顶部橙色刻度线 + 沙漏标记
+   修复：原版旁白框无边框无投影（框内 25 vs 框外 40，判定不出边界）。
+   ================================================================ */
+#narration-box{
+  position:absolute;left:50%;bottom:30px;transform:translateX(-50%);
+  width:min(1080px,92vw);z-index:19;cursor:pointer;
+  padding:30px 46px 26px;text-align:center;background:none;border:none;box-shadow:none}
+#narration-box::before{
+  content:'';position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(100deg, rgba(7,8,10,.965) 0%, rgba(16,19,24,.955) 100%);
+  border:1px solid rgba(255,255,255,.20);border-left:5px solid var(--orange);
+  clip-path:polygon(var(--bevel) 0, 100% 0, 100% calc(100% - var(--bevel)), calc(100% - var(--bevel)) 100%, 0 100%, 0 var(--bevel));
+  box-shadow:0 16px 46px rgba(0,0,0,.62);backdrop-filter:blur(9px)}
+#narration-box::after{content:'';position:absolute;top:0;left:var(--bevel);right:0;height:1px;z-index:2;
+  background:repeating-linear-gradient(90deg, rgba(255,106,26,.55) 0 12px, transparent 12px 24px)}
+#narration-box > .nb-tag{
+  position:absolute;top:-1px;left:0;padding:5px 14px;z-index:2;
+  font-family:var(--mono);font-size:9.5px;letter-spacing:.28em;
+  background:var(--orange);color:#0a0c0f;font-weight:700}
+#narration-text{font-size:19.5px;line-height:2.0;color:#dde4ec;letter-spacing:.04em;font-style:normal}
+#next-indicator-n{color:var(--orange);font-size:12px;margin-top:12px;animation:bounce 1.2s infinite}
+
+/* ================================================================
+   ⑥ 选项 —— 大号编号 + 细分隔线，hover 反白
+   ================================================================ */
+#choice-panel{position:absolute;left:50%;bottom:250px;transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:0;z-index:22;width:min(700px,92vw);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  background:rgba(7,8,10,.72);backdrop-filter:blur(6px)}
+.choice-btn{
+  display:flex;align-items:center;gap:18px;padding:15px 24px;
+  font-size:17px;font-family:inherit;letter-spacing:.08em;color:#eef3f9;
+  background:transparent;border:none;border-bottom:1px solid var(--line-2);
+  cursor:pointer;text-align:left;transition:background .18s, color .18s, padding-left .18s}
+.choice-btn:last-child{border-bottom:none}
+.choice-btn .no{font-family:var(--mono);font-size:14px;color:var(--orange);
+  letter-spacing:0;flex:0 0 auto;transition:color .18s}
+.choice-btn:hover{background:var(--orange);color:#0a0c0f;padding-left:34px;font-weight:600}
+.choice-btn:hover .no{color:rgba(10,12,15,.65)}
+.choice-btn.free{color:#c2ccd6;font-size:15.5px}
+.choice-btn.free .no{color:var(--grey-2)}
+
+/* ================================================================
+   ⑦ 幕间 / 自由输入
+   ================================================================ */
+#interlude-panel{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);
+  z-index:21;width:min(1000px,95vw);padding:22px 28px;
+  background:linear-gradient(100deg, rgba(7,8,10,.965), rgba(16,19,24,.955));
+  border:1px solid rgba(255,255,255,.20);border-left:5px solid var(--orange);
+  clip-path:polygon(var(--bevel) 0, 100% 0, 100% calc(100% - var(--bevel)), calc(100% - var(--bevel)) 100%, 0 100%, 0 var(--bevel));
+  box-shadow:0 16px 46px rgba(0,0,0,.6);backdrop-filter:blur(9px)}
+.inter-note{font-size:15.5px;color:#dde4ec;line-height:1.9;margin-bottom:15px;
+  letter-spacing:.06em;padding-left:12px;border-left:2px solid var(--orange)}
+.inter-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.inter-btn{padding:10px 20px;font-size:14.5px;font-family:inherit;letter-spacing:.16em;
+  cursor:pointer;color:#e8edf3;background:transparent;
+  border:1px solid rgba(255,255,255,.28);transition:all .18s}
+.inter-btn:hover{background:var(--orange);border-color:var(--orange);color:#0a0c0f;font-weight:600}
+.inter-btn.scene-offer{border-color:var(--orange);color:var(--orange);font-weight:600;
+  animation:pulse 1.8s infinite}
+.inter-btn.scene-offer:hover{background:var(--orange);color:#0a0c0f}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 rgba(255,106,26,0)}
+  50%{box-shadow:0 0 22px rgba(255,106,26,.6)}}
+.inter-group{display:flex;gap:8px;align-items:center}
+.grp-label{font-family:var(--mono);font-size:10.5px;letter-spacing:.24em;color:var(--grey-2)}
+#move-btns{display:flex;gap:6px}
+.move-btn{font-size:13px;font-family:inherit;color:#c8d1db;cursor:pointer;padding:8px 14px;
+  background:transparent;border:1px solid rgba(255,255,255,.22);letter-spacing:.10em;
+  transition:all .16s}
+.move-btn:hover{border-color:var(--orange);color:var(--orange)}
+
+#input-panel{position:absolute;left:50%;bottom:30px;transform:translateX(-50%);z-index:22;
+  width:min(820px,93vw);padding:20px 22px;
+  background:linear-gradient(100deg, rgba(7,8,10,.965), rgba(16,19,24,.955));
+  border:1px solid rgba(255,255,255,.20);border-left:5px solid var(--orange);
+  box-shadow:0 16px 46px rgba(0,0,0,.6)}
+.input-hint{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--orange);
+  margin-bottom:12px}
+.input-row{display:flex;gap:10px}
+#free-input{flex:1;padding:12px 16px;font-size:17px;font-family:inherit;color:#fff;
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.24);outline:none;
+  transition:border-color .18s, background .18s}
+#free-input:focus{border-color:var(--orange);background:rgba(255,255,255,.12)}
+#btn-send{padding:0 28px;font-size:15px;font-family:inherit;cursor:pointer;font-weight:600;
+  color:#0a0c0f;background:var(--orange);border:none;letter-spacing:.20em;transition:background .16s}
+#btn-send:hover{background:#ff8340}
+.input-quick{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.quick{font-size:12.5px;font-family:inherit;color:#c2ccd6;background:transparent;
+  border:1px dashed rgba(255,255,255,.26);padding:5px 14px;cursor:pointer;transition:all .16s}
+.quick:hover{color:var(--orange);border-color:var(--orange)}
+
+/* ================================================================
+   ⑧ 存档 / 菜单弹窗
+   ================================================================ */
+#modal{position:fixed;inset:0;background:rgba(4,5,7,.74);z-index:50;
+  display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-box{width:min(760px,93vw);max-height:82vh;overflow:auto;padding:0;
+  background:linear-gradient(160deg,#0b0d11,#141820);
+  border:1px solid rgba(255,255,255,.20);border-left:5px solid var(--orange);
+  clip-path:polygon(18px 0, 100% 0, 100% calc(100% - 18px), calc(100% - 18px) 100%, 0 100%, 0 18px);
+  box-shadow:0 30px 80px rgba(0,0,0,.7)}
+.modal-title{display:flex;align-items:center;gap:14px;padding:20px 28px;
+  font-size:17px;font-weight:700;letter-spacing:.30em;color:#fff;
+  border-bottom:1px solid var(--line);
+  background:linear-gradient(90deg, rgba(255,106,26,.14), transparent 70%)}
+.modal-title::before{content:'';width:4px;height:16px;background:var(--orange)}
+.modal-body{font-size:14.5px;line-height:2;color:#c8d1db;padding:20px 28px 26px}
+.save-slot{margin-bottom:10px}
+.log-item{padding:10px 4px;border-bottom:1px solid var(--line-2)}
+.log-item .log-name{color:var(--orange);margin-right:10px;font-weight:600}
+.log-item.narration{color:var(--grey)}
+.world-kv{margin:6px 0}
+.world-kv b{color:var(--orange);font-weight:600}
+.rumor{color:#c39aa0}
+/* 存档槽：编号 + 元信息 + 操作 */
+.slot-card{display:flex;align-items:center;gap:16px;padding:14px 18px;margin-bottom:9px;
+  background:rgba(255,255,255,.045);border:1px solid rgba(255,255,255,.14);
+  transition:all .18s}
+.slot-card:hover{background:rgba(255,106,26,.12);border-color:var(--orange);
+  transform:translateX(5px)}
+.slot-no{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--orange);
+  flex:0 0 54px;line-height:1;letter-spacing:-.02em}
+.slot-meta{flex:1;min-width:0}
+.slot-meta .s-title{font-size:15px;color:#fff;letter-spacing:.08em}
+.slot-meta .s-sub{font-family:var(--mono);font-size:11.5px;color:var(--grey);margin-top:5px;letter-spacing:.06em}
+.slot-act .inter-btn{padding:8px 16px;font-size:13px}
+
+.set-row{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:15px 4px;border-bottom:1px solid var(--line-2)}
+.set-row:last-child{border-bottom:none}
+.set-label{font-size:14.5px;color:#fff;letter-spacing:.08em}
+.set-label small{display:block;font-family:var(--mono);font-size:10.5px;
+  color:var(--grey-2);margin-top:4px;letter-spacing:.06em}
+.set-ctl{display:flex;gap:6px;align-items:center}
+.seg{display:flex;border:1px solid rgba(255,255,255,.24)}
+.seg button{padding:7px 15px;font-size:12.5px;font-family:inherit;cursor:pointer;
+  color:#c2ccd6;background:transparent;border:none;border-right:1px solid rgba(255,255,255,.18);
+  letter-spacing:.14em;transition:all .16s}
+.seg button:last-child{border-right:none}
+.seg button.on{background:var(--orange);color:#0a0c0f;font-weight:600}
+.vol-track{position:relative;width:156px;height:4px;background:rgba(255,255,255,.18)}
+.vol-fill{position:absolute;left:0;top:0;height:100%;width:62%;background:var(--orange)}
+.vol-knob{position:absolute;top:50%;left:62%;width:13px;height:13px;margin:-6.5px 0 0 -6.5px;
+  background:#fff;box-shadow:0 0 10px rgba(255,106,26,.9)}
+
+#toast{position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:60;
+  padding:11px 26px;font-size:14px;letter-spacing:.18em;color:#fff;
+  background:rgba(7,8,10,.96);border:1px solid var(--orange);border-left:5px solid var(--orange);
+  box-shadow:0 12px 34px rgba(0,0,0,.6)}
+
+#llm-wait{position:fixed;right:18px;bottom:14px;z-index:40;width:180px;padding:10px 13px;
+  background:rgba(7,8,10,.92);border:1px solid rgba(255,255,255,.18);
+  border-left:4px solid var(--orange);pointer-events:none}
+.lw-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.lw-dot{width:5px;height:5px;background:var(--orange);animation:lwpulse 1.4s ease-in-out infinite}
+@keyframes lwpulse{0%,100%{opacity:.25}50%{opacity:1}}
+#lw-text{font-size:11px;letter-spacing:.14em;color:#b9c2cc;flex:1}
+#lw-sec{font-family:var(--mono);font-size:11px;color:var(--orange)}
+.lw-track{height:2px;background:rgba(255,255,255,.14);overflow:hidden}
+.lw-bar{height:100%;width:34%;background:linear-gradient(90deg,transparent,var(--orange),transparent);
+  animation:lwslide 1.6s linear infinite}
+@keyframes lwslide{0%{transform:translateX(-110%)}100%{transform:translateX(410%)}}
+
+#scene-title-card{position:absolute;inset:0;z-index:30;display:flex;align-items:center;
+  justify-content:center;background:rgba(4,5,7,.76);pointer-events:none}
+#scene-title-card span{font-size:40px;font-weight:700;letter-spacing:.36em;text-indent:.36em;
+  color:#fff;text-shadow:0 0 34px rgba(255,106,26,.5)}
+
+.hidden{display:none !important}
+</style>
+</head>
+<body>
+
+<!-- ============ ① 标题 ============ -->
+<div id="title-screen" class="screen active">
+  <div class="title-bg"></div>
+  <div class="title-snow" id="title-snow"></div>
+  <div class="title-content">
+    <div class="game-title">
+      <div class="idx">MIYUKI　／　CHAPTER 01</div>
+      <h1>深雪</h1>
+      <div class="subtitle">yukiguni · snow country</div>
+      <div class="tagline">她一直在等，我一直在逃，<br>雪一直落在两人之间。</div>
+    </div>
+    <div class="title-menu">
+      <button class="title-btn primary"><span class="no">01</span>开始游戏</button>
+      <button class="title-btn"><span class="no">02</span>继续旅程</button>
+      <button class="title-btn"><span class="no">03</span>读取存档</button>
+      <button class="title-btn"><span class="no">04</span>设　　置</button>
+    </div>
+    <div class="title-footer">VER 1.0　／　雪国奇谭 第一部</div>
+  </div>
+</div>
+
+<!-- ============ ② 游戏画面 ============ -->
+<div id="game-screen" class="screen">
+  <div id="bg-layer">
+    <div id="bg-a" class="bg-img show"></div>
+    <div id="bg-b" class="bg-img"></div>
+  </div>
+  <div id="snow-overlay"></div>
+  <div id="vignette"></div>
+  <div id="sprite-layer"></div>
+
+  <div id="hud">
+    <div id="status-bar">
+      <span class="st st-phase">P1 · 初遇</span>
+      <span class="st">DAY<b>1</b></span>
+      <span class="st">老屋 · 客厅</span>
+      <span class="st">深雪<b>50</b></span>
+      <span class="st st-axes">羁绊♪20　山之念▲15　现世◇15</span>
+      <span class="st warn">冬祭还有 3 天</span>
+    </div>
+    <div id="menu-bar">
+      <button class="menu-btn icon" title="背景音乐">♫</button>
+      <button class="menu-btn">自动</button>
+      <button class="menu-btn">日志</button>
+      <button class="menu-btn">世界</button>
+      <button class="menu-btn">存档</button>
+      <button class="menu-btn">读档</button>
+      <button class="menu-btn">设置</button>
+      <button class="menu-btn">标题</button>
+    </div>
+  </div>
+
+  <div id="dialog-box" class="hidden">
+    <div id="nameplate"><span id="name-text">深雪</span></div>
+    <div id="action-text">（得到解放的她像肋下生出了双翅，在这片凄清冷寂的天地中欢快地奔走）</div>
+    <div id="dialog-text">呐，你喜欢雪吗？</div>
+    <div id="next-indicator">▼</div>
+  </div>
+
+  <div id="narration-box" class="hidden">
+    <div class="nb-tag">NARRATION</div>
+    <div id="narration-text">亲戚们总是将简单的道理，说得很拐弯抹角。他们围绕着同一个话题，商议了好几个小时——在亲戚中，到底由谁来收养我。必须有人来抽到这个下下签。</div>
+    <div id="next-indicator-n">▼</div>
+  </div>
+
+  <div id="choice-panel" class="hidden">
+    <button class="choice-btn"><span class="no">01</span>……我喜欢这雪</button>
+    <button class="choice-btn"><span class="no">02</span>我…不了解…</button>
+    <button class="choice-btn"><span class="no">03</span>（长久地沉默）</button>
+    <button class="choice-btn free"><span class="no">✎</span>自由输入想说的话…</button>
+  </div>
+
+  <div id="interlude-panel" class="hidden">
+    <div class="inter-note">雪还在下。距冬祭还有三天。</div>
+    <div class="inter-actions">
+      <div class="inter-group"><span class="grp-label">MOVE</span>
+        <div id="move-btns">
+          <button class="move-btn">→ 老屋 · 庭院</button>
+          <button class="move-btn">→ 镇上街道</button>
+          <button class="move-btn">→ 神社</button>
+        </div>
+      </div>
+      <button class="inter-btn">交谈</button>
+      <button class="inter-btn">等待 / 过夜</button>
+      <button class="inter-btn scene-offer">▶ 推进剧情：清雪</button>
+    </div>
+  </div>
+
+  <div id="llm-wait">
+    <div class="lw-row"><span class="lw-dot"></span><span id="lw-text">等待深雪回应</span><span id="lw-sec">2s</span></div>
+    <div class="lw-track"><div class="lw-bar"></div></div>
+  </div>
+</div>
+
+<!-- ============ ⑧ 存档 / 菜单弹窗 ============ -->
+<div id="modal" class="hidden">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">读 档</div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<script>
+const BG = {
+  corridor: '../../game/assets/backgrounds/bg_oldhouse_corridor.png',
+  blizzard: '../../game/assets/backgrounds/bg_mountains_blizzard.png',
+  courtyard: '../../game/assets/backgrounds/bg_courtyard.png',
+  festival: '../../game/assets/backgrounds/bg_town_night_festival.png',
+};
+const SPR = {
+  miyuki:  '../../game/assets/sprites/miyuki_smile.png',
+  miyukiN: '../../game/assets/sprites/miyuki_normal.png',
+  shuuji:  '../../game/assets/sprites/shuuji_child.png',
+  man:     '../../game/assets/sprites/relative_man.png',
+  woman:   '../../game/assets/sprites/relative_woman.png',
+};
+function setSprites(list, sceneLight = 1) {
+  const layer = document.getElementById('sprite-layer');
+  layer.innerHTML = '';
+  const n = list.length;
+  const xs = n === 1 ? [.62] : n === 2 ? [.26, .74] : [.13, .46, .79];
+  list.forEach((sp, i) => {
+    const box = document.createElement('div');
+    box.className = 'sprite on' + (sp.speak ? ' speaking' : '');
+    box.style.setProperty('--x', (xs[i] * 100) + '%');
+    box.style.height = (sp.h || 74) + '%';
+    const img = document.createElement('img');
+    img.src = sp.src;
+    img.style.filter = `brightness(${((sp.speak ? 1 : .86) * sceneLight).toFixed(2)}) contrast(1.02)`;
+    box.appendChild(img);
+    const sh = document.createElement('div'); sh.className = 'shadow'; box.appendChild(sh);
+    layer.appendChild(box);
+  });
+}
+function setBg(url, dim) {
+  const a = document.getElementById('bg-a');
+  a.style.backgroundImage = `url('${url}')`;
+  a.style.filter = dim ? `brightness(${dim})` : '';
+}
+function snow(id, n) {
+  const el = document.getElementById(id);
+  let h = '';
+  for (let i = 0; i < n; i++) {
+    const s = 2 + Math.random() * 5, l = Math.random() * 100,
+          d = 7 + Math.random() * 12, del = -Math.random() * 18, o = .4 + Math.random() * .55;
+    h += `<div class="snowflake" style="left:${l}vw;width:${s}px;height:${s}px;opacity:${o};animation-duration:${d}s;animation-delay:${del}s"></div>`;
+  }
+  el.innerHTML = h;
+}
+function show(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const title = document.getElementById('title-screen');
+  const game = document.getElementById('game-screen');
+  ['dialog-box','narration-box','choice-panel','interlude-panel']
+    .forEach(i => document.getElementById(i).classList.add('hidden'));
+  document.getElementById('modal').classList.add('hidden');
+  document.getElementById('llm-wait').style.display = 'none';
+  if (name === 'title') { title.classList.add('active'); return; }
+  game.classList.add('active');
+  if (name === 'dialog') {
+    setBg(BG.blizzard, .96);
+    setSprites([{ src: SPR.miyuki, speak: true, h: 78 }, { src: SPR.shuuji, speak: false, h: 68 }], .98);
+    document.getElementById('dialog-box').classList.remove('hidden');
+  } else if (name === 'dialog_dark') {
+    setBg(BG.corridor, 1);
+    setSprites([{ src: SPR.shuuji, speak: false, h: 66 },
+                { src: SPR.man, speak: true, h: 72 },
+                { src: SPR.woman, speak: false, h: 73 }], 1.18);
+    document.getElementById('dialog-box').classList.remove('hidden');
+    document.getElementById('name-text').textContent = '叔父';
+    document.getElementById('action-text').textContent = '（他推了推眼镜，视线游移开）';
+    document.getElementById('dialog-text').textContent = '麻烦呐——';
+  } else if (name === 'narration') {
+    setBg(BG.corridor, 1); setSprites([], 1);
+    document.getElementById('narration-box').classList.remove('hidden');
+  } else if (name === 'choice') {
+    setBg(BG.courtyard, .98);
+    setSprites([{ src: SPR.miyukiN, speak: true, h: 74 }], .98);
+    document.getElementById('dialog-box').classList.remove('hidden');
+    document.getElementById('dialog-text').textContent = '呐，你喜欢雪吗？';
+    document.getElementById('action-text').classList.add('hidden');
+    document.getElementById('choice-panel').classList.remove('hidden');
+  } else if (name === 'save') {
+    setBg(BG.festival, 1);
+    setSprites([{ src: SPR.miyuki, speak: false, h: 70 }], 1);
+    document.getElementById('modal-title').textContent = '读 档';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="slot-card"><div class="slot-no">01</div>
+        <div class="slot-meta"><div class="s-title">P2 · 清雪之后</div>
+          <div class="s-sub">DAY 2 / 老屋 · 庭院 / 深雪 58 / 冬祭まであと 2</div></div>
+        <div class="slot-act"><button class="inter-btn">读取</button></div></div>
+      <div class="slot-card"><div class="slot-no">02</div>
+        <div class="slot-meta"><div class="s-title">P3 · 冬祭前夜</div>
+          <div class="s-sub">DAY 3 / 镇上街道 / 深雪 66 / 冬祭まであと 1</div></div>
+        <div class="slot-act"><button class="inter-btn">读取</button></div></div>
+      <div class="slot-card"><div class="slot-no">03</div>
+        <div class="slot-meta"><div class="s-title">（空档位）</div>
+          <div class="s-sub">NO DATA</div></div>
+        <div class="slot-act"><button class="inter-btn">保存</button></div></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+  } else if (name === 'settings') {
+    setBg(BG.festival, 1);
+    setSprites([], 1);
+    document.getElementById('modal-title').textContent = '设 置';
+    document.getElementById('modal-body').innerHTML = `
+      <div class="set-row"><div class="set-label">文字速度<small>TEXT SPEED</small></div>
+        <div class="set-ctl"><div class="seg"><button>慢</button><button class="on">标准</button><button>快</button><button>瞬间</button></div></div></div>
+      <div class="set-row"><div class="set-label">背景音乐<small>BGM VOLUME</small></div>
+        <div class="set-ctl"><div class="vol-track"><div class="vol-fill"></div><div class="vol-knob"></div></div></div></div>
+      <div class="set-row"><div class="set-label">自动播放间隔<small>AUTO INTERVAL</small></div>
+        <div class="set-ctl"><div class="seg"><button class="on">1.4s</button><button>2.4s</button><button>4.0s</button></div></div></div>
+      <div class="set-row"><div class="set-label">飘雪与特效<small>SNOW EFFECT</small></div>
+        <div class="set-ctl"><div class="seg"><button class="on">开</button><button>关</button></div></div></div>`;
+    document.getElementById('modal').classList.remove('hidden');
+  } else if (name === 'interlude') {
+    setBg(BG.festival, 1); setSprites([], 1);
+    document.getElementById('interlude-panel').classList.remove('hidden');
+    document.getElementById('llm-wait').style.display = '';
+  }
+}
+snow('title-snow', 46);
+snow('snow-overlay', 70);
+show((location.hash || '#title').slice(1));
+window.addEventListener('hashchange', () => show(location.hash.slice(1)));
+</script>
+</body>
+</html>
