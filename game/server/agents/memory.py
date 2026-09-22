@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """记忆流与三因子检索（C1）+ 反思与信念沉淀（C2）。
 
-依据《论文讲解/01_Generative_Agents》：
+依据《资料/07_论文讲解/01_Generative_Agents》：
 - 每条经历成为记忆流中的一条自然语言记录（MemoryEntry）；
 - 检索分 = recency(按游戏日指数衰减) + importance(1~10) + relevance(关键词重叠)；
 - 重要经历累积超过阈值（REFLECT_THRESHOLD）触发反思，生成高层洞察写回记忆流——

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """端到端自动通关测试：模拟玩家从 P1 走到分支层，直至到达任一结局。
 
-结局由三轴与选择决定（见《设计文档/多结局分支设计.md》）：
+结局由三轴与选择决定（见《资料/02_设定与设计/多结局分支设计.md》）：
 END_SNOW 白之彼方 / END_STAY 炉火与春讯 / END_SPRING 等到花开 / END_FAR 两行足迹。
 穷举式路由验证在 tests/test_branching.py。"""
 import json

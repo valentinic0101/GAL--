@@ -117,7 +117,7 @@ class World:
         self.events = []                 # 事件溯源日志
         # 深雪好感单独常驻快捷读取
         self.miyuki_affection_extra = 0
-        # 三轴（多结局分叉打分）：羁绊/执念/现世，见《设计文档/多结局分支设计.md》
+        # 三轴（多结局分叉打分）：羁绊/执念/现世，见《资料/02_设定与设计/多结局分支设计.md》
         self.axes = {'bond': 20, 'obsession': 15, 'worldly': 15}
         # C1：每角色记忆流；C2：反思能量槽（重要度累积，达阈值触发反思）
         self.memory = {c: MemoryStream() for c in CHARACTERS}

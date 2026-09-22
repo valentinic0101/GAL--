@@ -13,7 +13,7 @@ import urllib.request
 BASE = 'http://127.0.0.1:8300'
 GETS = ('/api/state', '/api/world', '/api/backlog', '/api/saves', '/api/locations', '/api/health')
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   'web', 'playthrough_data.json')
+                   'web', 'doc', 'playthrough_data.json')
 
 ADJ = {
     'station': ['town_street', 'fields'], 'fields': ['station', 'oldhouse_front'],

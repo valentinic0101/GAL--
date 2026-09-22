@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码结构与运行通路 · 深雪 ~miyuki~</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: "Hiragino Mincho ProN","Songti SC","Noto Serif SC",serif; background:#0c1018; color:#d7dfea; }
+.wrap { max-width: 1160px; margin: 0 auto; padding: 28px 22px 100px; }
+h1 { font-size: 30px; letter-spacing: 8px; color:#f4e9c8; margin: 16px 0 4px; }
+.sub { color:#8fa0ba; font-size:14px; letter-spacing:2px; margin-bottom: 18px; }
+.sub a { color:#d8c68a; }
+h2 { font-size: 21px; letter-spacing: 4px; color:#e8d9a8; margin: 44px 0 14px; border-left: 4px solid #d8c68a; padding-left: 12px; }
+h3 { font-size: 16.5px; letter-spacing: 2px; color:#cfe0f8; margin: 26px 0 8px; }
+h4 { font-size: 14.5px; color:#a8bede; margin: 16px 0 6px; letter-spacing:1px; }
+p, li { line-height: 2; font-size: 14.5px; }
+code, .kbd { background:#1a2136; border:1px solid #33405e; border-radius:4px; padding:1px 8px; font-family: Menlo, monospace; font-size: 13px; color:#cfe0f8; }
+pre { background:#101726; border:1px solid #2a3654; border-radius:8px; padding: 14px 18px; font-size: 13px; line-height:1.75; overflow:auto; margin: 10px 0; }
+pre .c { color:#6f83a8; }
+table { border-collapse: collapse; width: 100%; margin: 10px 0 18px; font-size: 13.5px; }
+th, td { border: 1px solid #2a3654; padding: 6px 11px; text-align: left; line-height: 1.75; vertical-align: top; }
+th { background:#1a2136; color:#f4e9c8; letter-spacing:1px; white-space: nowrap; }
+td code { white-space: nowrap; }
+a { color:#d8c68a; }
+.tip { background:#141b2e; border:1px dashed #3a4a70; border-radius: 8px; padding: 12px 18px; margin: 12px 0; font-size: 14px; line-height: 2; }
+.warn { background:#2a1c22; border:1px dashed #8a4a58; border-radius: 8px; padding: 12px 18px; margin: 12px 0; font-size: 14px; line-height: 2; }
+.toc { columns: 2; column-gap: 40px; background:#101726; border:1px solid #2a3654; border-radius:10px; padding: 16px 24px; margin: 14px 0 8px; }
+.toc a { display:block; font-size: 14px; line-height: 2.1; text-decoration: none; }
+.toc a:hover { color:#f4e9c8; }
+.sig { font-family: Menlo, monospace; font-size: 13px; color:#9fd8a8; background:#121a2c; border-left: 3px solid #3a5a48; padding: 4px 12px; margin: 8px 0 4px; border-radius: 0 6px 6px 0; overflow:auto; }
+.badge { display:inline-block; font-size: 11.5px; padding: 1px 9px; border-radius: 10px; border:1px solid #3a4a70; color:#9fb2cc; margin-left: 8px; vertical-align: 1px; }
+.badge.llm { border-color:#7a5a48; color:#e8b090; }
+.flow { background:#101726; border:1px solid #2a3654; border-radius:8px; padding: 14px 20px; font-size: 13.5px; line-height: 2.1; margin: 10px 0; }
+.flow b { color:#e8d9a8; font-weight: normal; }
+.arrow { color:#6f83a8; }
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>代码结构与运行通路</h1>
+<div class="sub">深雪 ~miyuki~ 引擎全解 · 与 <a href="/doc/docs.html">docs.html 总览图</a> 互为补充 · <a href="/">▶ 返回游戏</a> · <a href="/doc/playthrough.html">▶ 通关实录</a></div>
+
+<div class="toc">
+  <a href="#tree">0. 完整目录树</a>
+  <a href="#startup">1. 启动链路：从命令到可玩</a>
+  <a href="#api">2. HTTP API 全表（14 个端点）</a>
+  <a href="#frame">3. 核心数据结构：Frame 帧</a>
+  <a href="#world">4. 世界层 world/world.py</a>
+  <a href="#engine">5. 运行时引擎 engine.py</a>
+  <a href="#scene-path">6. 运行通路 A：场景推进</a>
+  <a href="#input-path">7. 运行通路 B：玩家输入</a>
+  <a href="#inter-path">8. 运行通路 C：幕间自由行动</a>
+  <a href="#agent">9. Agent 层：人设卡/护栏/规则引擎/LLM</a>
+  <a href="#director">10. 导演层：吸引子与叙事压力</a>
+  <a href="#gossip">11. 八卦传播引擎</a>
+  <a href="#script">12. 场景脚本数据 scenes/script.py</a>
+  <a href="#frontend">13. 前端 web/ 逐模块</a>
+  <a href="#assets">14. 资产生成器 assets/</a>
+  <a href="#data">15. 存档与事件溯源格式</a>
+  <a href="#test">16. 测试与监督体系</a>
+  <a href="#limits">17. 并发模型与已知限制</a>
+</div>
+
+<p class="note">目录结构于 2026-09-17 重组：前端拆层（web/js/）、生成物分离（web/gen/）、文档页归入 web/doc/、引擎与剧本按职责拆分、测试产出移入 game/reports/。本文档已同步结构部分；文中各模块的「行数」标注因拆分而失效，已从结构树中移除。</p>
+<h2 id="tree">0. 完整目录树（带注释）</h2>
+<pre>game/                            <span class="c"># 游戏本体：可独立运行，运行期只需本目录</span>
+├── 启动游戏.command / .bat       <span class="c"># 一键启动：起服务 + 开浏览器（macOS 双击 / Windows 双击）</span>
+├── 停止游戏.command / .bat       <span class="c"># 停服务</span>
+├── README.md                     <span class="c"># 运行说明与玩法</span>
+├── llm.json                      <span class="c"># LLM 配置（key/baseUrl/model/timeout）；删除即回落规则引擎</span>
+├── server/                       <span class="c"># ===== 引擎（Python / FastAPI）=====</span>
+│   ├── app.py                    <span class="c"># FastAPI 入口：REST 端点 + 静态挂载（全局单例 Engine）</span>
+│   ├── engine/                   <span class="c"># 运行时引擎（包，原单文件 engine.py 拆分而来）</span>
+│   │   ├── core.py               <span class="c">#   class Engine：帧构造·场景推进·幕间自由行动·Agent 应答</span>
+│   │   ├── config.py             <span class="c">#   阶段提示/BGM 映射/转场/在场演员/幕间候选词（纯数据）</span>
+│   │   ├── storage.py            <span class="c">#   存档目录、事件日志与落盘原语</span>
+│   │   └── __init__.py           <span class="c">#   对外接口：Engine / SAVE_DIR / LOG_PATH / log</span>
+│   ├── settings.py               <span class="c"># C1~C8 各机制的运行时开关（可单项关闭以定位问题）</span>
+│   ├── world/world.py            <span class="c"># 世界层：不变量·场景图·Knowledge·Relation·WorldEvent·World</span>
+│   ├── agents/                   <span class="c"># personas / guardrails / rule_engine / llm / memory / score / canon</span>
+│   ├── director/                 <span class="c"># director（吸引子与压力）· gossip（八卦传播）· guide（引导策略）</span>
+│   └── scenes/                   <span class="c"># 剧本数据：script.py 汇总 · trunk.py 主干 P0~P10 · branches.py 分歧结局</span>
+├── web/                          <span class="c"># ===== 前端（原生 HTML/CSS/JS，无框架无构建）=====</span>
+│   ├── index.html                <span class="c"># 游戏页 DOM（唯一入口）：标题屏/背景层/立绘层/对话框/选项/幕间/菜单</span>
+│   ├── style.css                 <span class="c"># 全部样式：设计令牌 + 组件</span>
+│   ├── js/                       <span class="c"># 前端逻辑，按层编号——加载顺序即依赖顺序</span>
+│   │   ├── 00_core.js            <span class="c">#   $ / REST 封装 / 全局状态 / 玩家设置 / toast</span>
+│   │   ├── 10_audio.js           <span class="c">#   BGM 播放与淡入淡出</span>
+│   │   ├── 20_snow.js            <span class="c">#   飘雪（标题页与游戏画面共用）</span>
+│   │   ├── 30_busy.js            <span class="c">#   忙碌指示与重复触发防护</span>
+│   │   ├── 40_stage.js           <span class="c">#   背景切换与立绘布景：地面贴合/纵深/亮度匹配/接触投影</span>
+│   │   ├── 50_flow.js            <span class="c">#   打字机·帧队列播放器·点击与键盘推进·自动模式</span>
+│   │   ├── 60_panels.js          <span class="c">#   选项/自由输入/幕间自由行动/结局卡/场景卡/状态条</span>
+│   │   ├── 70_modals.js          <span class="c">#   回想日志/世界状态/设置面板/存档读档</span>
+│   │   └── 90_boot.js            <span class="c">#   标题页绑定·请求去重包装·全局导出·开机副作用（必须最后）</span>
+│   ├── gen/                      <span class="c"># 由 tools 生成的素材清单（勿手改）</span>
+│   │   ├── asset_manifest.js     <span class="c">#   已有素材清单 → 前端缺图优雅降级的依据</span>
+│   │   ├── stage_meta.js         <span class="c">#   逐场景地面线/缩放/光照 → 立绘贴合</span>
+│   │   └── sprites_meta.js       <span class="c">#   每张立绘脚底透明边距</span>
+│   ├── doc/                      <span class="c"># 在线文档页（地址 /doc/*.html）</span>
+│   │   ├── code.html             <span class="c">#   本页</span>
+│   │   ├── docs.html             <span class="c">#   画布总览</span>
+│   │   ├── flow.html             <span class="c">#   六张 Mermaid 流程图</span>
+│   │   ├── playthrough.html      <span class="c">#   通关实录</span>
+│   │   └── playthrough_data.json <span class="c">#   真实通关轨迹（capture_playthrough.py 生成）</span>
+│   └── vendor/mermaid.min.js     <span class="c"># 流程图离线依赖</span>
+├── assets/                       <span class="c"># ===== 素材层：只放可替换的美术与音频 =====</span>
+│   ├── backgrounds/  sprites/  cg/  bgm/  ui/   <span class="c"># 接入后的成品（源文件在项目资料目录）</span>
+│   └── README.md                 <span class="c"># 替换素材的规则与尺寸约定</span>
+├── tools/                        <span class="c"># ===== 开发期脚本：生成·接入·审计·守护 =====</span>
+│   ├── paths.py                  <span class="c"># 路径单一来源（含树外生图源目录，可用 GAL_ART_SRC 覆盖）</span>
+│   ├── _tools.py                 <span class="c"># 程序化美术库：渐变/山峦/雪/光晕/暗角/噪点</span>
+│   ├── gen_backgrounds.py  gen_sprites.py  gen_music.py   <span class="c"># 程序化生成占位素材</span>
+│   ├── cutout_sprites.py  integrate_art.py                <span class="c"># AI 素材接入管线（抠图 → 裁切 → 嵌场景）</span>
+│   ├── audit_stage.py  stage_config.json                  <span class="c"># 舞台审计与舞台参数的单一来源</span>
+│   ├── supervisor.py             <span class="c"># 监督者：健康探测→自动重启→离线回归；cron 每 30 分钟调用</span>
+│   └── requirements.txt          <span class="c"># 抠图/绘图依赖清单（rembg 链较重，按需安装）</span>
+├── tests/                        <span class="c"># ===== 质量层：一致性·分支·护栏·记忆·评测·通关 =====</span>
+│   └── data/                     <span class="c"># 采访题库（C5）与谜团攻击集（C6）</span>
+├── reports/                      <span class="c"># 测试脚本的输出（生成物，勿手改）</span>
+├── saves/                        <span class="c"># {slot}.json 状态快照 + events_{slot}.jsonl 事件溯源（运行时数据）</span>
+└── logs/                         <span class="c"># access/engine/server/supervisor/last_fail 日志（运行时数据，可清空）</span></pre>
+
+<h2 id="startup">1. 启动链路：从命令到可玩</h2>
+<div class="flow">
+<b>python3 -m uvicorn server.app:app --port 8300</b> <span class="arrow">→</span> 载入 <b>app.py</b> <span class="arrow">→</span> import 链 <span class="arrow">→</span> <b>engine.Engine()</b> 构造 <span class="arrow">→</span> <code>World()</code>（不变量/空知识库/关系矩阵 50/50）+ <code>Director(world)</code> <span class="arrow">→</span> 全局单例 <code>engine</code> <span class="arrow">→</span> 挂载静态目录 <code>/assets</code>（资产）与 <code>/</code>（web/，html=True）<span class="arrow">→</span> 浏览器 GET <code>/</code> 返回 index.html → 标题页 → 点「开始游戏」→ <code>POST /api/new</code> → <code>Engine.new_game()</code> → 进入 P1。
+</div>
+<ul>
+<li>导入顺序：<code>app.py → engine（包：core ← config / storage）→ world / director.director / director.gossip / agents.* / scenes.script</code>。无循环依赖：world 不依赖任何上层；scenes 只被 engine 引用。</li>
+<li><code>LLM = LLMAdapter()</code> 在 import 时构造：读 <code>game/llm.json</code>（或环境变量），此时即确定可用性。</li>
+<li>全局单例意味着<b>所有浏览器会话共享同一局游戏</b>（见 §17 限制）。</li>
+</ul>
+
+<h2 id="api">2. HTTP API 全表（app.py，14 个端点）</h2>
+<table>
+<tr><th>端点</th><th>方法</th><th>入参</th><th>返回</th><th>内部调用</th></tr>
+<tr><td><code>/api/health</code></td><td>GET</td><td>—</td><td><code>{ok, llm, model}</code></td><td>LLM.available</td></tr>
+<tr><td><code>/api/state</code></td><td>GET</td><td>—</td><td>最后一帧（title 兜底帧）</td><td>engine.last_frame</td></tr>
+<tr><td><code>/api/new</code></td><td>POST</td><td>—</td><td><code>{frames:[标题帧,首拍]}</code></td><td>Engine.new_game → enter_scene('P1')</td></tr>
+<tr><td><code>/api/advance</code></td><td>POST</td><td>—</td><td><code>{frames:[下一拍]}</code></td><td>Engine.advance → step()</td></tr>
+<tr><td><code>/api/input</code></td><td>POST</td><td><code>{text?, choice_index?}</code></td><td><code>{frames:[玩家帧,应答帧,下一拍]}</code></td><td>Engine.submit_input</td></tr>
+<tr><td><code>/api/act</code></td><td>POST</td><td><code>{action: move/talk/wait/enter_scene, to?, text?}</code></td><td><code>{frames:[...]}</code></td><td>Engine.interlude_act / enter_offered_scene</td></tr>
+<tr><td><code>/api/locations</code></td><td>GET</td><td>—</td><td>当前地点 + 邻接表（供移动按钮）</td><td>LOCATIONS</td></tr>
+<tr><td><code>/api/backlog</code></td><td>GET</td><td>—</td><td>最近 100 条对话日志</td><td>engine.history</td></tr>
+<tr><td><code>/api/world</code></td><td>GET</td><td>—</td><td>天数/阶段/旗标/好感/倒计时/三角色知识库</td><td>World（含传闻展示）</td></tr>
+<tr><td><code>/api/save/{slot}</code></td><td>POST</td><td>slot 路径参数</td><td><code>{ok, path}</code></td><td>Engine.save（快照+事件落盘）</td></tr>
+<tr><td><code>/api/load/{slot}</code></td><td>POST</td><td>slot</td><td><code>{frames}</code> / 404</td><td>Engine.load → World.load</td></tr>
+<tr><td><code>/api/saves</code></td><td>GET</td><td>—</td><td>存档槽列表</td><td>扫 saves/</td></tr>
+<tr><td><code>/api/personas</code><span class="badge">调试</span></td><td>GET</td><td>—</td><td>人设卡清单（是否含 prompt）</td><td>PERSONAS</td></tr>
+<tr><td><code>/api/mode</code></td><td>POST</td><td><code>{llm:bool}</code></td><td>当前模式</td><td>LLM.enabled 开关（回归离线用）</td></tr>
+</table>
+
+<h2 id="frame">3. 核心数据结构：Frame 帧（前后端唯一契约）</h2>
+<p>引擎与前端之间不传「对话状态」，只传<b>自包含的帧</b>。前端是纯帧播放器，任何时候刷新页面用 <code>/api/state</code> 取最后一帧即可恢复界面。</p>
+<pre>{
+  "kind": "narration|line|me|choice|free|interlude|scene_title|error",
+  "name": "深雪",            <span class="c"># 名牌文字（line/me）</span>
+  "who": "miyuki",           <span class="c"># 角色 id（前端定位立绘侧别）</span>
+  "text": "我们走吧",         <span class="c"># 正文（打字机逐字显示）</span>
+  "action": "（她有点用力地拽着我的胳膊）",  <span class="c"># 斜体动作行</span>
+  "choices": [ {"label":"…我喜欢这雪", …} ],  <span class="c"># choice 帧的选项</span>
+  "bg": "bg_courtyard.png",  <span class="c"># 背景文件名（前端交叉淡切）</span>
+  "sprites": [ {"id":"miyuki","name":"深雪","sprite":"miyuki_smile.svg","side":"right"} ],
+  "src": "llm|rules|null",   <span class="c"># 应答来源标记（仅即兴应答帧有）</span>
+  "note": "P1 · 初遇",        <span class="c"># 场景标题卡 / 幕间提示 / 错误详情</span>
+  "meta": {                  <span class="c"># 状态条 + 场景推进提示 + 音乐</span>
+    "phase":"P1", "day":1, "location":"老屋庭院", "time":"day",
+    "affection":56, "countdown":3, "mode":"scene|interlude",
+    "scene_title":"P1 · 初遇", "llm":true,
+    "bgm":"bgm_main",                       <span class="c"># 场景优先，幕间按地点（SCENE_BGM/LOC_BGM）</span>
+    "scene_offer":"P2", "scene_offer_title":"P2 · 清雪"   <span class="c"># 幕间满足条件时出现</span>
+  }
+}</pre>
+
+<h2 id="world">4. 世界层 world/world.py（170 行）</h2>
+<h3>4.1 常量</h3>
+<table>
+<tr><th>常量</th><th>内容</th></tr>
+<tr><td><code>INVARIANTS</code></td><td>6 条物理常量：雪一直下 / 钟停 4:49 / 站台空无一人 / 深雪始终更高 / 群山魔性 / 老屋渐死。注入 Agent 场景描述，保证演出一致。</td></tr>
+<tr><td><code>LOCATIONS</code></td><td>12 个地点的图：<code>station ⇄ fields ⇄ oldhouse_front ⇄ courtyard ⇄ oldhouse_in ⇄ oldhouse_corridor</code>，<code>station ⇄ town_street ⇄ {toba_home, shrine_road ⇄ shrine}</code>，<code>mountains / blizzard</code> 孤立（终章专用）。每项含 name 与 bg。</td></tr>
+<tr><td><code>CHARACTERS</code></td><td>8 个角色 id：shuuji, miyuki, toba, relative_man, relative_woman, father, mother, yukihime</td></tr>
+</table>
+<h3>4.2 类</h3>
+<div class="sig">Knowledge(key, content, source='witness', hops=0, distorted=False)</div>
+<p>一条知识。source ∈ witness（亲眼）/ heard（听说）；hops 传播手数（≥3 不再传播）；distorted 是否走样。</p>
+<div class="sig">Relation(a, b) → .affection/.trust (0~100) / .log / .change(da, dt, reason)</div>
+<p>关系矩阵条目，全部变更带理由记录（变更日志进存档，可审计）。</p>
+<div class="sig">WorldEvent(kind, data) → to_dict()</div>
+<p>事件总线条目：player_say / player_move / scene_enter / scene_end / knowledge / relation / gossip / day_end / game_start。</p>
+<div class="sig">World → emit / know / knows / knowledge_of / rel / change_relation / affection / to_dict / load</div>
+<ul>
+<li><code>affection(a,b)</code> = 矩阵值 + <code>miyuki_affection_extra</code>（主线的额外好感加成，钳制 0~100）。</li>
+<li><code>to_dict()/load()</code> 完整序列化——存档即状态快照，配合 events jsonl 实现事件溯源。</li>
+</ul>
+
+<h2 id="engine">5. 运行时引擎 server/engine/ —— 方法全解</h2>
+<p>引擎原为单文件 <code>engine.py</code>，2026-09-17 按职责拆为包：<code>core.py</code>（Engine 类，推进与应答）、<code>config.py</code>（阶段提示与 BGM/转场/演员表）、<code>storage.py</code>（存档落盘）。下文的 <code>Engine.xxx()</code> 方法均在 <code>core.py</code>。</p>
+<table>
+<tr><th>方法</th><th>职责</th></tr>
+<tr><td><code>sprite_of(char, expr)</code></td><td>按阶段选立绘：修二 P7+ 用 teen、此前 child；深雪按表情映射 5 张 SVG；幻影 yukihime 用 white。</td></tr>
+<tr><td><code>frame(kind,…)</code></td><td><b>帧工厂</b>：组装 §3 结构；计算在场人物（SCENE_CAST 或 Director.present_chars）；旁白/台词/玩家帧写入 history（backlog）。</td></tr>
+<tr><td><code>new_game()</code></td><td>重置 World+Director+history → enter_scene('P1')。</td></tr>
+<tr><td><code>enter_scene(id)</code></td><td>置 scene_id/beat_idx=0/mode='scene'/<b>pending_choices=None（防卡死，01:45 夜间事故修复点）</b>→ 返回 [标题卡帧, 首拍]。</td></tr>
+<tr><td><code>step()</code></td><td>状态机主循环：按 beat 类型消费脚本——narration/line/me 直接出帧；choice/free 挂起 pending_choices 等输入；effect 静默应用后 continue；脚本耗尽 → end_scene()。</td></tr>
+<tr><td><code>apply_effect(beat)</code></td><td>旗标合并 / 好感加成（extra+矩阵双写）/ 地点与时间切换 / daily_life_count 递增。</td></tr>
+<tr><td><code>end_scene()</code></td><td>见 §6 通路 A 尾部。</td></tr>
+<tr><td><code>_witness(sid)</code></td><td>事件→目击者知识库：P1 亲戚目击「黑长发女孩牵走修二」、P3 修二记住「她自称姐姐」、P7 记住「三年仍在等」等——这些正是八卦传播的种子。</td></tr>
+<tr><td><code>interlude_act(action, payload)</code></td><td>幕间三动作 + 叙事压力 +6；详见 §8 通路 C。</td></tr>
+<tr><td><code>submit_input(text, choice_index)</code></td><td>见 §7 通路 B。</td></tr>
+<tr><td><code>_agentRespond(char, text)</code></td><td>Agent 应答总入口：LLM 优先（重试≤2，护栏合格才收）→ 失败回落规则引擎；统一结算 effects（好感/旗标）。</td></tr>
+<tr><td><code>advance()</code></td><td>场景内步进；幕间返回氛围帧；pending_choices 挂起时原样返回（前端仍显示选项）。</td></tr>
+<tr><td><code>enter_offered_scene()</code></td><td>「▶ 推进剧情」按钮 → Director 仲裁 → enter_scene。</td></tr>
+<tr><td><code>save(slot)/load(slot)</code></td><td>JSON 快照 + world.events 追加写入 events_{slot}.jsonl 后清空（批次溯源）。</td></tr>
+</table>
+<p>模块级映射表：<code>STAGE_NOTES</code>（P1/P2 禁止姐姐宣言、P3 才初告、P6 前不报名字——防 LLM 泄漏后设）、<code>SCENE_BGM</code>/<code>LOC_BGM</code>（音乐映射）、<code>TRANSITIONS</code>（P7 时 day 跳 1000 表示三年后）、<code>SCENE_CAST</code>（各场景在场人物，P0 只有 shuuji+yukihime）。</p>
+
+<h2 id="scene-path">6. 运行通路 A：场景推进（点「下一步」）</h2>
+<div class="flow">
+前端点击对话框/回车 → <b>advance()</b>（web/js/50_flow.js，busy 防重入）→ POST /api/advance → <b>Engine.advance()</b> → pending_choices 为空 → <b>step()</b> 读 <code>SCENES[scene_id].beats[beat_idx]</code>：
+<br>· <b>narration</b> → narration 帧（斜体居中框）→ beat_idx+1 返回
+<br>· <b>line</b> → line 帧：who→CHAR_NAME 名牌、expr→立绘切换（normal/smile/sad/surprise/white）、action→斜体动作行
+<br>· <b>me</b> → 玩家台词帧（金色名牌「修二」）
+<br>· <b>choice</b> → 挂起 pending_choices，帧带 options；前端渲染选项按钮 +「自由输入」入口
+<br>· <b>free</b> → 同上但纯开放输入
+<br>· <b>effect</b> → apply_effect() 静默应用，continue 不出帧
+<br>拍耗尽 → <b>end_scene()</b>：_witness 写目击知识 → TRANSITIONS 推天数（P6→P7 时 day 1000=三年跳）→ mode='interlude' → 幕间帧 + <b>_after_interlude()</b>：Director.should_advance() 仲裁 → meta.scene_offer 高亮「▶ 推进剧情」。
+</div>
+
+<h2 id="input-path">7. 运行通路 B：玩家输入（选项/自由输入/交谈）</h2>
+<div class="flow">
+POST /api/input {text 或 choice_index} → <b>submit_input()</b>：
+<br>① 出「修二」帧（玩家话上屏，写事件总线 player_say）；
+<br>② 选项带 affection/flag 则直接结算；自由输入则 <b>rule_engine.classify()</b> 意图分类后吸收相近选项效果；
+<br>③ <b>_agentRespond('miyuki', text)</b>：
+<br>　LLM 可用 → assemble_prompt（人设卡 → 你的相关记忆 → 当前场景 → 知识边界 → 输出格式 → STAGE_NOTES 阶段约束）→ 智谱 GLM（thinking=disabled，25s 超时）→ 解析 JSON {say, action, expression} → <b>guardrails.validate</b>：合格即收（src=llm）；违规/异常重试 ≤2 次；
+<br>　仍失败 → <b>rule_engine.respond()</b>（意图→行为模式库，src=rules），规则命中的 affection/flag 同样结算；
+<br>④ 应答帧（带 src 标记）→ beat_idx+1 → step() 出下一拍。前端一次收到 [玩家帧, 应答帧, 下一拍] 三帧顺次播放。
+</div>
+<div class="warn">谜团锁在通路 B 中是「生成后硬校验」：LLM 输出含 人类/雪女/身世/从哪/三年怎么活 等关键词且不在六种合法回应（含正典白名单）内 → 判 mystery_leak 打回。实测：「你是雪女吧？」→ LLM 一句岔开后被放行；若正面作答则必被打回并回落「我会在那里，一直等啊。一直」。</div>
+
+<h2 id="inter-path">8. 运行通路 C：幕间自由行动</h2>
+<div class="flow">
+POST /api/act → <b>interlude_act()</b>：叙事压力 +6（闲逛也有代价）后分派：
+<br>· <b>move</b>：校验目标在 LOCATIONS[loc].adjacent 内（一次只能走邻接点）→ 换场景 → 旁白库随文；特殊地点（如祭典倒计时归零的参道）可触发条件。
+<br>· <b>talk</b>：Director.present_chars() 取在场者（老屋=深雪，鸟羽家=鸟羽老人，P1 亲戚会议=叔婶）→ 无人在场出氛围帧 → 有则走与通路 B 相同的 _agentRespond；鸟羽老人听过传闻时可能引用（后果回流）。
+<br>· <b>wait</b>：day+1、冬祭倒计时-1、压力+10 → <b>gossip.run_daily_gossip(world)</b> 离线传播（§11）→ day_end 事件 → 旁白 +「传闻正在悄悄流传……」提示。
+<br>每条通路末尾都经 <b>_after_interlude()</b>：Director 仲裁（见 §10）→ 满足则帧内附 scene_offer；P6 结束的 time_skip 旗标强制把 offer 指到 P7。
+</div>
+
+<h2 id="agent">9. Agent 层 agents/（四个模块）</h2>
+<h3>9.1 personas.py —— 人设卡（8 张）</h3>
+<table>
+<tr><th>id</th><th>显示名</th><th>卡要点（硬规则摘录）</th></tr>
+<tr><td>miyuki</td><td>深雪</td><td>三不原则（不解释/不辩论/不愤怒）· 称呼一律「小修」· 短句+语气词（哦呢啦嘛吧――）· 先行动后解释且只给身体理由 · 六条性格总纲 · <b>谜团锁最高优先级</b>（六种合法回应）</td></tr>
+<tr><td>shuuji</td><td>修二</td><td>叙事者/玩家化身：幼年短促重复词汇贫乏、少年平实唠叨；从不主动肢体接触；道别永远说不完整；「miyuki」只在心中念</td></tr>
+<tr><td>toba</td><td>鸟羽老人</td><td>独眼长者，台词一句至多两句，无感叹号</td></tr>
+<tr><td>relative_man / relative_woman</td><td>叔父/婶婶</td><td>拐弯抹角推诿（『麻烦呐――』『虽然我不想直说――』），真话藏在换气里</td></tr>
+<tr><td>narrator</td><td>旁白</td><td>文学化第一人称（雪之海/山的魔性/晒过被子的暖香），不替角色说话、不揭谜底</td></tr>
+<tr><td>father / yukihime</td><td>父亲 / 白衣幻影</td><td>父亲：木讷少语每句有分量；幻影：不对话只唤「修二――――」</td></tr>
+</table>
+<h3>9.2 guardrails.py —— 校验规则清单</h3>
+<table>
+<tr><th>规则组</th><th>内容</th></tr>
+<tr><td><code>CANON_WHITELIST</code></td><td>约 30 句正典台词白名单（「我没有骗你」「不要哭了……男孩子可是不能哭的哦」等），天然合法跳过扫描——防止对原句误报。</td></tr>
+<tr><td><code>check_miyuki</code></td><td>① &gt;18 字须含「小修」；② 14 词禁忌黑名单（总的来说/我理解你的感受/我是雪女/你迟到了…）；③ 单句 ≤42 字；④ ≥8 字须含语气词；⑤ <b>谜团锁</b>：18 个关键词命中且不在 6 种合法回应 → mystery_leak。</td></tr>
+<tr><td><code>check_shuuji</code></td><td>文艺腔黑名单（宛如/仿佛/我爱你/想念…）、幼年禁称「深雪」、幼年词汇量超龄检测。</td></tr>
+<tr><td><code>validate(char, text, stage)</code></td><td>按角色分派；<code>is_acceptable()</code> 供 LLM 重试循环判定。</td></tr>
+</table>
+<h3>9.3 rule_engine.py —— 兜底对演</h3>
+<ul>
+<li><code>INTENT_PATTERNS</code>：20 类意图的关键词表（call_liar / ask_identity / ask_mystery / ask_parents / cry / refuse / accept / ask_name / praise / ask_play / promise_return / farewell / apology / ask_school / ask_stay / like_snow / smalltalk_hi / help_offer / ask_shrine / thanks）；<code>classify()</code> 按最长命中排序。</li>
+<li><code>miyuki_respond()</code>：优先级链 = 谜团锁 → 指控骗子（按阶段分化）→ 父母话题（悲伤开关：笑容消失→转移量身高）→ 哭泣安慰 → 其余意图 → 按好感分档的日常池（≥70 生活指令循环 / 40~69 自来熟 / &lt;40 初遇生涩），统一返回 <code>R(say, expr, action, effects)</code>。</li>
+<li><code>toba_respond / relative_respond</code>：极简短句群像；<code>NARRATOR_BANK</code> 按标签（P1_intro/P2_cry/P7_return/P0_climate/generic）的旁白库，<code>narrate(tag)</code> 随机取句。</li>
+</ul>
+<h3>9.4 llm.py —— 模型适配（智谱 GLM）</h3>
+<div class="sig">LLMAdapter：配置优先级 环境变量 &gt; game/llm.json &gt; 默认；extraBody 默认 {"thinking":{"type":"disabled"}}；timeout 25s；enabled 运行时开关</div>
+<p><code>chat(system, user)</code>：POST {baseUrl}/chat/completions → 校验 choices[0].message.content 非空（防「思考吞掉全部 token」）→ 异常抛 RuntimeError 由上层重试。<code>assemble_prompt()</code> 拼装顺序固定：人设卡 → 【你的相关记忆】(≤6 条) → 【当前场景】(Director.scene_desc 含不变量) → 【你的知识边界】(≤8 条) → 输出格式 → 【阶段约束】(engine 追加)。</p>
+
+<h2 id="director">10. 导演层 director/director.py</h2>
+<h3>10.1 ATTRACTORS 前置条件表（真实代码条件）</h3>
+<table>
+<tr><th>节点</th><th>剧情时间</th><th>触发条件（cond(world)）</th></tr>
+<tr><td>P1 初遇</td><td>T+1 冬</td><td>恒真（开场即入）</td></tr>
+<tr><td>P2 清雪</td><td>同冬次日</td><td>met_miyuki ∧ ¬snow_cleared</td></tr>
+<tr><td>P3 空屋</td><td>同冬</td><td>comforted ∧ day≥3</td></tr>
+<tr><td>P4 冬祭</td><td>祭典夜</td><td>snowball_fight ∧ festival_countdown≤0</td></tr>
+<tr><td>P5 刻身高</td><td>年末</td><td>festival_done ∧ 好感≥45 ∧ 在老屋客厅</td></tr>
+<tr><td>P6 送站</td><td>岁末</td><td>height_marked</td></tr>
+<tr><td>P7 重逢</td><td>T+4 冬</td><td>left_town（P6 结束即置）</td></tr>
+<tr><td>P8 日常</td><td>同冬数日</td><td>reunion_done ∧ 在老屋/庭院</td></tr>
+<tr><td>P9 量身高</td><td>冬末</td><td>daily_life ∧ 在老屋客厅</td></tr>
+<tr><td>P10 齐刘海</td><td>离别晨</td><td>height_remarked</td></tr>
+<tr><td>P0 雪原</td><td>其后某冬</td><td>left_again</td></tr>
+</table>
+<h3>10.2 Director 方法</h3>
+<div class="sig">compute_pressure() → 下一节点基础分(条件满足 50 否则 0) + min(40, season_pressure) + P4 加成 max(0, 20-倒计时×5)</div>
+<p><code>should_advance()</code>：条件满足 <b>且</b> 压力 ≥70 才放行——自由度与骨架并存的仲裁核心。<code>present_chars()</code>：老屋系地点且 met_miyuki → 深雪在场；toba_home → 老人；P1 且亲戚会议 → 叔婶。<code>scene_desc()</code>：「{phase}阶段·第{day}天·{时段}·{地点}。雪一直下着。在场人物：…」注入每条 LLM 调用。</p>
+
+<h2 id="gossip">11. 八卦传播引擎 director/gossip.py</h2>
+<table>
+<tr><th>角色</th><th>传播概率</th><th>扭曲倾向</th><th>风格</th></tr>
+<tr><td>relative_man</td><td>0.75</td><td>push_away</td><td>「老屋怕是有点不干净」「遗产要出问题」</td></tr>
+<tr><td>relative_woman</td><td>0.70</td><td>exaggerate</td><td>「闹妖怪，还有个不知道哪来的丫头出入」</td></tr>
+<tr><td>toba</td><td>0.30</td><td>none</td><td>原样转述</td></tr>
+<tr><td>miyuki / shuuji</td><td>0.05 / 0.20</td><td>none</td><td>几乎不与人往来</td></tr>
+</table>
+<p><code>CONTACT_EDGES</code>：叔⇄婶 0.8、叔→鸟 0.35、婶→鸟 0.30（单向概率独立）。<code>run_daily_gossip(world, seed)</code> 算法：</p>
+<pre>for (a, b, p) in CONTACT_EDGES:            <span class="c"># 每条社交边</span>
+  以 p 决定今日是否接触（seed=day×131 确定性可回放）
+  for a 的每条知识 kn（hops&lt;3）:
+    以性格过滤器的传播率决定是否外传
+    走样判定：一手 35% / 多手 55%（仅 push_away/exaggerate 性格）
+    走样 → 从 DISTORTIONS 模板取新传闻（distorted=True）
+    b 未听过或手数更旧 → know(b, key, 内容, heard, hops+1, distorted)
+    记 gossip 事件；返回新增条目列表（幕间过夜时前端展示提示）
+rumor_hooks(char) → 该角色所有 heard 知识（NPC 对话可引用 → 后果回流）</pre>
+
+<h2 id="script">12. 场景脚本数据 server/scenes/</h2>
+<p><code>script.py</code> 只做汇总，节点分片在 <code>trunk.py</code>（主干 P1~P10 与终章 P0）与 <code>branches.py</code>（P11/P12M/P12B/E_* 分歧与结局）。两个分片写进同一个 <code>SCENES</code> 注册表，节点 id 全局唯一，对外接口不变。</p>
+<p>11 个场景共 <b>265 拍</b>，7 种 beat 类型：narration（旁白 109）/ line（台词 80）/ me（玩家台词 37）/ choice（选项 14）/ free（自由输入 2）/ effect（世界效果 14）/ 场景头。全部台词与旁白摘自原始剧本正典；每个 choice 带 label/intents/affection/flag；effect 驱动旗标链：<code>met_miyuki → comforted → snowball_fight → festival_done → height_marked → left_town → reunion_done → daily_life → height_remarked → left_again → finale</code>——这条链正是导演层吸引子的触发轨道。</p>
+<table>
+<tr><th>场景</th><th>拍数</th><th>构成（narration/line/me/choice/free/effect）</th></tr>
+<tr><td>P1 初遇</td><td>23</td><td>10 / 9 / — / 1 / 1 / 2</td></tr>
+<tr><td>P2 清雪</td><td>22</td><td>10 / 8 / 1 / 2 / — / 1</td></tr>
+<tr><td>P3 空屋与雪仗</td><td>31</td><td>13 / 9 / 6 / 2 / — / 1</td></tr>
+<tr><td>P4 冬祭之夜</td><td>21</td><td>11 / 6 / 1 / 1 / — / 2</td></tr>
+<tr><td>P5 刻身高</td><td>26</td><td>7 / 11 / 6 / 1 / — / 1</td></tr>
+<tr><td>P6 miyuki</td><td>34</td><td>14 / 11 / 5 / 3 / — / 1</td></tr>
+<tr><td>P7 欢迎回家</td><td>27</td><td>13 / 5 / 6 / 1 / — / 2</td></tr>
+<tr><td>P8 老屋日常</td><td>11</td><td>2 / 4 / 3 / — / 1 / 1</td></tr>
+<tr><td>P9 柱上的痕</td><td>23</td><td>5 / 10 / 6 / 1 / — / 1</td></tr>
+<tr><td>P10 齐刘海</td><td>26</td><td>14 / 6 / 3 / 1 / — / 2</td></tr>
+<tr><td>P0 白之彼方</td><td>21</td><td>14 / 1 / 5 / — / — / 1</td></tr>
+</table>
+
+<h2 id="frontend">13. 前端 web/ 逐模块</h2>
+<h3>13.1 index.html DOM 分层</h3>
+<pre>#title-screen（标题屏：bg_title 背景 + 动态雪花 + 标题菜单）
+#game-screen
+  #bg-layer (#bg-a/#bg-b 双缓冲交叉淡切) · #snow-overlay(CSS 动画雪花) · #vignette
+  #sprite-layer (#sprite-left 修二 / #sprite-right 深雪 / #sprite-far 群像)
+  #scene-title-card · #status-bar(阶段/天/地点/好感/倒计时)
+  #dialog-box(名牌+动作行+打字机正文+四角雪花饰) · #narration-box
+  #choice-panel · #input-panel(自由输入+快捷语) · #interlude-panel(移动/交谈/过夜/▶推进)
+  #menu-bar(♪音乐 自动 日志 世界 存档 读档 标题) · #modal · #toast</pre>
+<h3>13.2 前端逻辑函数清单（web/js/，按层拆分）</h3>
+<table>
+<tr><th>组</th><th>函数</th><th>要点</th></tr>
+<tr><td>API 封装</td><td><code>get/post/API.*</code></td><td>fetch 薄封装，全部走 JSON</td></tr>
+<tr><td>氛围</td><td><code>spawnSnow/makeFlake</code></td><td>70 片随机参数 CSS 雪花</td></tr>
+<tr><td>BGM 子系统</td><td><code>setBgm/rampVolume/unlockBgm/updateBgmBtn</code></td><td>单 Audio 循环；切曲=旧曲 0.9s 淡出→换 src→1.8s 淡入至 0.55；首次指针/键盘事件解锁自动播放；♪ 静音持久化 localStorage</td></tr>
+<tr><td>忙碌护栏</td><td><code>busyOn/busyOff/guarded</code></td><td>包装 advance/submitInput/doAct：防重入 + 「深雪正在思考……」提示 + wait 光标</td></tr>
+<tr><td>帧播放器</td><td><code>playFrames/applyFrame/hideAllPanels</code></td><td>应用帧=背景→BGM→立绘→状态条→按 kind 分派面板</td></tr>
+<tr><td>打字机</td><td><code>typeWriter/completeType</code></td><td>34ms/字，1~2 字步长随机；点击跳过</td></tr>
+<tr><td>面板</td><td><code>showChoices/showInput/showInterlude</code></td><td>选项含「✎ 自由输入」入口；幕间动态生成邻接移动按钮与 ▶ 推进；talkMode 切换交谈</td></tr>
+<tr><td>渲染</td><td><code>setBg/setSprites/setSpriteImg/updateStatus</code></td><td>双缓冲淡切；立绘按 side 落位；状态条实时刷新</td></tr>
+<tr><td>系统</td><td><code>openModal/showSaveModal/doSave/doLoad/saveAuto/toast</code></td><td>日志/世界（含镇上传闻渲染）/三档存读档/auto 自动存档</td></tr>
+</table>
+
+<h2 id="assets">14. 资产生成器 assets/</h2>
+<ul>
+<li><b>_tools.py</b>：vgrad 垂直渐变 / ridge 多层山峦剪影 / snow_layer 三景深雪粒(风偏移) / glow 径向光晕(窗光灯火) / vignette 暗角 / grain 纸纹噪点 / tree 积雪树 / footprint_trail 足迹 / snow_ground 起伏雪原。</li>
+<li><b>gen_backgrounds.py</b>：12 个绘制函数（站台/走廊/客厅昼夜/庭院/街道/祭典参道/神社/群山/暴风雪/鸟羽家/标题），每张都是构图脚本而非贴图——改参数重跑即换景。</li>
+<li><b>gen_sprites.py</b>：SVG 分层规范（hair-back/body/face-base/hair-front/features），深雪 5 表情共用同一套脸部几何函数（eye_open/closed_happy/sad/wide），保证同一人感；齐刘海与雪花发饰是标志特征。</li>
+<li><b>gen_music.py</b>：音色库 piano(泛音+指数衰减+击键噪声)/flute(慢起音+颤音)/pad/taiko/clap/wind(一阶低通风声)，reverb 多抽头；6 首曲子=事件列表渲染（render→stereo→WAV→afconvert AAC 128k）。曲谱是 (音名, 拍数) 序列，改谱重跑即可换曲。</li>
+</ul>
+
+<h2 id="data">15. 存档与事件溯源格式</h2>
+<pre>saves/auto.json
+{ "ts": 1789…, 
+  "world": { day, phase, location, time_slot, season_pressure, festival_countdown,
+             flags{…}, knowledge{角色:{key:{content,source,hops,distorted}}},
+             relations[{a,b,affection,trust,log[…]}], miyuki_affection_extra },
+  "engine": { mode, scene_id, beat_idx, history[≤200 条] } }
+
+saves/events_auto.jsonl    <span class="c"># 事件溯源：每次 save 把本批次 world.events 追加落盘</span>
+{"id":"…","t":1789…,"kind":"player_say","data":{"to":"miyuki","text":"…"}}
+{"id":"…","t":1789…,"kind":"gossip","data":{"from":"relative_man","to":"toba","key":"girl_took_shuuji",…}}</pre>
+<p>回放事件流即可重建任意时刻世界（架构 §2.1 的「存档/回放免费」承诺）。八卦用 <code>seed=day×131</code> 的确定性随机，同一存档重放传播结果一致。</p>
+
+<h2 id="test">16. 测试与监督体系</h2>
+<table>
+<tr><th>文件</th><th>内容</th><th>耗时/额度</th></tr>
+<tr><td>test_consistency.py</td><td>32 项：深雪谜团锁 7 探针×2 断言、30 轮闲聊零违规、修二护栏 3 项、八卦 15 日扩散+走样+三手封顶、资产全检（12 背景/10 立绘/6 BGM）、世界层序列化往返</td><td>离线 &lt;2s</td></tr>
+<tr><td>e2e_playthrough.py</td><td>机器人玩家：BFS 寻路 + 选项/自由输入 + 过夜推进，断言 P1→P0 全线与 finale 旗标 + 存读档往返；自动 <code>/api/mode llm:false</code> 离线、finally 恢复</td><td>离线 0.5s</td></tr>
+<tr><td>test_llm.py</td><td>真实 DeepSeek：场景内+幕间共 4 探针，断言谜团不泄漏与 src 来源</td><td>耗额度，勿放周期</td></tr>
+<tr><td>capture_playthrough.py</td><td>带轨迹采集的通关 → playthrough_data.json（403 条）</td><td>离线 0.5s</td></tr>
+<tr><td>supervisor.py</td><td>health(2 轮含 60s 重试) → 失败 pkill+重启(2 轮) → 全量回归 → HEARTBEAT-OK / TEST-FAIL 落日志；cron 每 30 分钟</td><td>离线</td></tr>
+</table>
+
+<h2 id="limits">17. 并发模型与已知限制</h2>
+<ul>
+<li><b>全局单例 Engine</b>：所有会话共享一局。监督回归离线跑（0.5s）+ <code>/api/mode</code> 开关把冲突窗口压到最小；彻底解法是「每会话一个 Engine 实例」（已在 night_notes 立项）。</li>
+<li>LLM 延迟：thinking disabled 后实测 0.7~1.0s；超时 25s ×重试 2 后必回落规则引擎，玩家永远能得到回应。</li>
+<li>FastAPI 默认单进程同步端点——引擎状态无锁但串行访问天然安全；若改多 worker 必须先把状态外置（Redis/SQLite）。</li>
+<li>资产为程序化示意级；接生图/音乐模型后按 gen_*.py 同名替换即可整体升级。</li>
+</ul>
+
+<p style="margin-top:36px"><a href="/">▶ 返回游戏</a> ｜ <a href="/doc/docs.html">总览图</a> ｜ <a href="/doc/playthrough.html">通关实录（403 条真实轨迹）</a></p>
+</div>
+</body>
+</html>

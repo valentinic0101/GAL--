@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>深雪 ~miyuki~ · 雪国开放世界 GAL</title>
-<link rel="stylesheet" href="style.css?v=20">
+<link rel="stylesheet" href="style.css?v=21">
 </head>
 <body>
 
@@ -40,7 +40,7 @@
   <div id="vignette"></div>
 
   <div id="bg-note" class="hidden"></div>
-  <div id="sprite-layer"><!-- 立绘由 main.js 按在场名单动态生成 --></div>
+  <div id="sprite-layer"><!-- 立绘由 js/40_stage.js 按在场名单动态生成 --></div>
 
   <div id="scene-title-card" class="hidden"><span></span></div>
 
@@ -91,7 +91,7 @@
       <button id="btn-send">说</button>
     </div>
     <div class="input-quick">
-      <!-- 快捷回答由 main.js renderChips() 按当前帧动态渲染 -->
+      <!-- 快捷回答由 js/60_panels.js renderChips() 按当前帧动态渲染 -->
     </div>
   </div>
 
@@ -130,9 +130,19 @@
   </div>
 </div>
 
-<script src="asset_manifest.js?v=20"></script>
-<script src="stage_meta.js?v=20"></script>
-<script src="sprites_meta.js?v=20"></script>
-<script src="main.js?v=20"></script>
+<!-- gen/：由 tools 生成的素材清单，勿手改（缺图降级 / 立绘贴合参数的依据） -->
+<script src="gen/asset_manifest.js?v=21"></script>
+<script src="gen/stage_meta.js?v=21"></script>
+<script src="gen/sprites_meta.js?v=21"></script>
+<!-- js/：前端逻辑按层编号，加载顺序即依赖顺序；90_boot.js 必须最后 -->
+<script src="js/00_core.js?v=21"></script>
+<script src="js/10_audio.js?v=21"></script>
+<script src="js/20_snow.js?v=21"></script>
+<script src="js/30_busy.js?v=21"></script>
+<script src="js/40_stage.js?v=21"></script>
+<script src="js/50_flow.js?v=21"></script>
+<script src="js/60_panels.js?v=21"></script>
+<script src="js/70_modals.js?v=21"></script>
+<script src="js/90_boot.js?v=21"></script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""舞台匹配审计（对应《设计文档/舞台匹配规范.md》）。
+"""舞台匹配审计（对应《资料/02_设定与设计/舞台匹配规范.md》）。
 
 逐项穷举校验"人物-场景匹配"六条规则在全部场景/背景/立绘上的落实：
   A. 背景完备：assets/backgrounds 每张图、剧本/地点表引用的每张图，都有 SCENE_STAGE 标定
@@ -8,7 +8,7 @@
   C. 出场完备：每个场景（基线 + 台词自动登台 + cast_add）可能登场的每个角色，都有人设与立绘。
   D. 几何穷举：常见分辨率 × 每个背景 × 1~5 人组合，槽位求解后不得出屏、不得重叠。
   E. 剧情一致：人物基准身高序符合圣经（深雪 > 修二任意形态；成年人 ≥ 深雪）。
-  F. 配置同步：web/stage_meta.js、web/sprites_meta.js 与 tools/stage_config.json、实际文件一致。
+  F. 配置同步：web/gen/stage_meta.js、web/gen/sprites_meta.js 与 tools/stage_config.json、实际文件一致。
 
 用法：python3 tools/audit_stage.py        # 全部通过退出 0，否则打印问题并退出 1
       python3 tools/audit_stage.py --fix  # 校验后重新生成两个 *_meta.js
@@ -74,7 +74,7 @@ def main(fix=False):
 
     print('== B. 立绘完备 ==')
     sp_dir = os.path.join(ROOT, 'assets', 'sprites')
-    feet_path = os.path.join(ROOT, 'web', 'sprites_meta.js')
+    feet_path = os.path.join(ROOT, 'web', 'gen', 'sprites_meta.js')
     feet = {}
     if os.path.exists(feet_path):
         txt = io_open(feet_path)
@@ -188,7 +188,7 @@ def main(fix=False):
     print('== F. 配置同步 ==')
     if fix:
         regenerate_meta(cfg, feet if feet else read_or_init_feet())
-    stage_meta = os.path.join(ROOT, 'web', 'stage_meta.js')
+    stage_meta = os.path.join(ROOT, 'web', 'gen', 'stage_meta.js')
     check('stage_meta.js 存在', os.path.exists(stage_meta))
     if os.path.exists(stage_meta):
         cur = io_open(stage_meta)
@@ -244,16 +244,16 @@ def regenerate_asset_manifest():
         return sorted(f for f in os.listdir(d) if f.endswith(('.png', '.svg', '.m4a'))) if os.path.isdir(d) else []
     manifest = {'bg': names('backgrounds'), 'cg': names('cg'), 'sprites': names('sprites')}
     js = '// 自动生成：tools/integrate_art.py / audit_stage.py —— 已有素材清单\nwindow.ASSET_MANIFEST = ' + _json.dumps(manifest, ensure_ascii=False) + ';\n'
-    with open(os.path.join(ROOT, 'web', 'asset_manifest.js'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(ROOT, 'web', 'gen', 'asset_manifest.js'), 'w', encoding='utf-8') as f:
         f.write(js)
 
 
 def regenerate_meta(cfg, feet):
     js = 'window.STAGE_META = ' + json.dumps(cfg, ensure_ascii=False) + ';'
-    with open(os.path.join(ROOT, 'web', 'stage_meta.js'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(ROOT, 'web', 'gen', 'stage_meta.js'), 'w', encoding='utf-8') as f:
         f.write('// 自动生成：tools/audit_stage.py（来源 tools/stage_config.json）——请勿手改\n' + js + '\n')
     fj = 'window.SPRITE_FEET = ' + json.dumps(feet, ensure_ascii=False) + ';'
-    with open(os.path.join(ROOT, 'web', 'sprites_meta.js'), 'w', encoding='utf-8') as f:
+    with open(os.path.join(ROOT, 'web', 'gen', 'sprites_meta.js'), 'w', encoding='utf-8') as f:
         f.write('// 自动生成：tools/integrate_art.py / audit_stage.py —— 立绘脚底透明边距\n' + fj + '\n')
     regenerate_asset_manifest()
     print('  已再生 stage_meta.js / sprites_meta.js / asset_manifest.js')

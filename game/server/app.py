@@ -5,7 +5,7 @@ import json
 import time
 from typing import Optional
 from fastapi import FastAPI, Request
-from fastapi.responses import JSONResponse, FileResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -24,7 +24,8 @@ app = FastAPI(title='雪国之恋 · 开放世界 GAL 引擎')
 engine = Engine()
 
 # 访问日志：玩家每一步操作在服务器侧可查（logs/access.log）
-ACCESS_LOG = os.path.join(ROOT, 'logs', 'access.log')
+# GAL_ACCESS_LOG 可覆盖路径，便于起临时实例做验证时不动正式日志。
+ACCESS_LOG = os.environ.get('GAL_ACCESS_LOG') or os.path.join(ROOT, 'logs', 'access.log')
 
 
 @app.middleware('http')
@@ -201,6 +202,19 @@ def play_entry():
     """免缓存入口：地址本身从未被缓存过，保证拿到最新前端。"""
     return FileResponse(os.path.join(ROOT, 'web', 'index.html'),
                         headers={'Cache-Control': 'no-store'})
+
+
+# ---------------------------------------------------------------- 在线文档旧址
+# 文档页已归入 web/doc/，与游戏界面分开。正式地址是 /doc/xxx.html；
+# 改版前它们是根路径下的四张页（老书签、README 旧链接仍然指向那里），这里 301 过去。
+# 只登记这五条具体路径，不用通配路由——通配会抢在 web 静态挂载之前吃掉 /style.css 之类的请求。
+def _doc_redirect(request: Request):
+    return RedirectResponse('/doc' + request.url.path, status_code=301)
+
+
+for _legacy in ('/code.html', '/docs.html', '/flow.html',
+                '/playthrough.html', '/playthrough_data.json'):
+    app.add_api_route(_legacy, _doc_redirect, methods=['GET'], include_in_schema=False)
 
 
 app.mount('/assets', StaticFiles(directory=os.path.join(ROOT, 'assets')), name='assets')

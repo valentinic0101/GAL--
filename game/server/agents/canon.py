@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""正典台词检索（C4）：从剧本 script.py 的 line 节拍自动构建 few-shot 语料。
+"""正典台词检索（C4）：从剧本的 line 节拍自动构建 few-shot 语料。
 
-- 语料单一来源 = scenes/script.py（与剧本永远同步，无需手工维护）；
+- 语料单一来源 = scenes/script.py 汇总的 SCENES（节点数据分片在 trunk.py / branches.py，
+  与剧本永远同步，无需手工维护）；
 - HOLDOUT 保留名场面台词不进检索库，专供评测（C5）做 held-out 验证，防"背答案"；
 - 意图匹配复用 rule_engine.classify，离线可用。
 """

@@ -1,0 +1,38 @@
+# 深雪 ~miyuki~ —— Git 忽略规则
+#
+# 原则：只提交「源码 / 素材 / 文档」，不提交运行时产物与本机环境。
+# 运行时产物（存档、日志、测试报告）每次跑游戏或跑测试都会变，
+# 提交进去会让每次 Source Control 都堆一大串无意义改动。
+
+# ---- 运行时产物 ----
+game/saves/
+game/logs/
+game/reports/
+
+# ---- 本机 Python 环境 ----
+# 抠图用的 .venv 曾达 495MB（rembg 依赖链），务必不要提交；
+# 需要时按 game/tools/requirements.txt 重建。
+.venv/
+venv/
+env/
+tools_venv*/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# ---- 操作系统 ----
+.DS_Store
+Thumbs.db
+._*
+
+# ---- 编辑器 ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+
+# ---- 临时文件 ----
+*.tmp
+*.orig
+*.rej
+*~

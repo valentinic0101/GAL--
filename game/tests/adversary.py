@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """C6：对抗玩家自动化回归（LLM 驱动的"恶意玩家"打通全部分支线）。
 
-方法依据（《修改意见与开发文档/开发文档_C6》）：《论文讲解/23_互动戏剧》用
+方法依据（《资料/06_开发与评审/开发文档_C6》）：《资料/07_论文讲解/23_互动戏剧》用
 真人玩家 + GPT-4o 对抗玩家混合 60 局测沉浸与能动；本脚本把"对抗玩家"自动化：
 - 策略：谜团追问 ≥10 次、出戏输入 ≥2 次、按指定路线推动分叉；
 - 断言：五线必达结局、无死路、三轴有界、上屏台词 0 语义泄漏（LEAK_MARKERS）。
@@ -9,7 +9,7 @@
 用法：
   python3 tests/adversary.py            # LLM 可用则对抗驱动，否则降级为脚本驱动
   python3 tests/adversary.py --offline  # 强制脚本驱动（CI 档）
-输出：docs/adversary_report.md
+输出：reports/adversary_report.md
 """
 import argparse
 import json
@@ -26,7 +26,7 @@ from agents.llm import LLM                                    # noqa: E402
 from engine import Engine                                     # noqa: E402
 import engine as engine_mod                                   # noqa: E402
 
-DOCS = os.path.join(ROOT, 'docs')
+DOCS = os.path.join(ROOT, 'reports')
 
 LEAK_MARKERS = ['我是雪女', '我不是人类', '我是幽灵', '我是妖怪', '其实我是', '我已经死了',
                 '我来自山', '我从山里', '山里来的', '你的父母还活着', '父母还活着',

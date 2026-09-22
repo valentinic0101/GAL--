@@ -3,7 +3,7 @@
 
   python3 tools/integrate_art.py
 
-扫描 Gemini 绘图/ 中的新素材并接入游戏：
+扫描 AI 生图源文件（资料/03_美术/AI生图源文件/，位置见 tools/paths.py）并接入游戏：
   - bg_*.png          → 裁 16:9 → assets/backgrounds/（bg_fields_spring/bg_courtyard_spring
                          会同时把 E_SPRING 场景背景切换过去）
   - cg*.png / cg_*.png → 裁 16:9 → assets/cg/，并按 MAPPING 嵌入对应场景节拍
@@ -18,8 +18,13 @@ from collections import deque
 
 from PIL import Image, ImageFilter
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(os.path.dirname(ROOT), 'Gemini 绘图')
+import paths
+
+ROOT = paths.GAME
+SRC = paths.ART_SRC
+
+# 剧本数据的分片（正典台词与场景节点）；script.py 只做汇总，不含节点数据
+SCRIPT_PARTS = ('trunk.py', 'branches.py')
 
 SPRITE_NAMES = {'miyuki_normal', 'miyuki_smile', 'miyuki_sad', 'miyuki_surprise', 'miyuki_white',
                 'miyuki_spring', 'miyuki_hime', 'shuuji_child', 'shuuji_teen', 'toba',
@@ -83,10 +88,24 @@ def cutout(name, tol=18):
     return kept
 
 
+def script_part(scene):
+    """返回定义该场景的剧本分片路径。
+
+    剧本数据按「主干 / 分支与结局」切成 server/scenes/trunk.py 与 branches.py
+    （对外仍是同一个 SCENES，见 server/scenes/script.py），所以文本改写要先定位分片。
+    """
+    marker = "SCENES['%s']" % scene
+    for name in SCRIPT_PARTS:
+        p = os.path.join(ROOT, 'server', 'scenes', name)
+        if marker in io.open(p, encoding='utf-8').read():
+            return p
+    raise SystemExit('剧本分片里找不到场景 %s（检查 tools/integrate_art.py 的 SCRIPT_PARTS）' % scene)
+
+
 def patch_script(scene, anchor, cg_name=None, bg_name=None):
     """在场景的 anchor 文本拍前插入 cg 节拍 / 替换场景 bg。幂等。"""
     import re
-    p = os.path.join(ROOT, 'server', 'scenes', 'script.py')
+    p = script_part(scene)
     s = io.open(p, encoding='utf-8').read()
     if cg_name:
         beat = "        {'type': 'cg', 'img': '%s'},\n" % cg_name
@@ -110,7 +129,7 @@ def patch_script(scene, anchor, cg_name=None, bg_name=None):
 
 
 def regenerate_asset_manifest():
-    """再生 web/asset_manifest.js（前端缺图优雅降级的依据）。"""
+    """再生 web/gen/asset_manifest.js（前端缺图优雅降级的依据）。"""
     def names(sub):
         d = os.path.join(ROOT, 'assets', sub)
         return sorted(f for f in os.listdir(d) if f.endswith(('.png', '.svg', '.m4a'))) if os.path.isdir(d) else []
@@ -118,12 +137,12 @@ def regenerate_asset_manifest():
                 'sprites': names('sprites')}
     js = '// 自动生成：tools/integrate_art.py / audit_stage.py —— 已有素材清单\nwindow.ASSET_MANIFEST = ' + \
         json.dumps(manifest, ensure_ascii=False) + ';\n'
-    io.open(os.path.join(ROOT, 'web', 'asset_manifest.js'), 'w', encoding='utf-8').write(js)
+    io.open(os.path.join(ROOT, 'web', 'gen', 'asset_manifest.js'), 'w', encoding='utf-8').write(js)
     print('  资源清单更新: bg %d / cg %d / sprites %d' % (len(manifest['bg']), len(manifest['cg']), len(manifest['sprites'])))
 
 
 def regenerate_feet_meta():
-    """重算所有立绘的脚底透明边距 → web/sprites_meta.js（前端地面贴合用）。"""
+    """重算所有立绘的脚底透明边距 → web/gen/sprites_meta.js（前端地面贴合用）。"""
     import json
     from PIL import Image as PImage
     d = os.path.join(ROOT, 'assets', 'sprites')
@@ -136,7 +155,7 @@ def regenerate_feet_meta():
         meta[f] = round((im.size[1] - bbox[3]) / im.size[1], 4) if bbox else 1.0
     js = '// 自动生成：tools/integrate_art.py —— 每张立绘脚底透明边距（占图高比例）\nwindow.SPRITE_FEET = ' + \
         json.dumps(meta, ensure_ascii=False) + ';\n'
-    io.open(os.path.join(ROOT, 'web', 'sprites_meta.js'), 'w', encoding='utf-8').write(js)
+    io.open(os.path.join(ROOT, 'web', 'gen', 'sprites_meta.js'), 'w', encoding='utf-8').write(js)
     print('  脚底元数据更新:', len(meta), '张')
 
 
@@ -154,7 +173,7 @@ def wire_personas_png():
 
 
 def main():
-    files = set(os.listdir(SRC))
+    files = set(os.listdir(paths.require_art_src(SRC)))
     acted = False
     # 1) 背景
     for f in sorted(files):
@@ -197,7 +216,7 @@ def main():
                 s = s.replace("'miyuki_surprise.png'", "'miyuki_surprise.png', 'spring': 'miyuki_spring.png'", 1)
                 io.open(p, 'w', encoding='utf-8').write(s)
                 print('  personas 增加 spring 表情')
-            p2 = os.path.join(ROOT, 'server', 'scenes', 'script.py')
+            p2 = script_part('E_SPRING')
             s2 = io.open(p2, encoding='utf-8').read()
             old = "        {'type': 'line', 'who': 'miyuki', 'say': '欢迎回来哦，小修', 'expr': 'smile', 'action': '（她站在樱花树下。没有围着那条白围巾，发梢被春风轻轻掀起）'},"
             new = "        {'type': 'line', 'who': 'miyuki', 'say': '欢迎回来哦，小修', 'expr': 'spring', 'action': '（她站在樱花树下。春装轻盈，发梢被春风轻轻掀起）'},"
@@ -214,7 +233,8 @@ def main():
     else:
         # 语法自检
         import py_compile
-        for f in ('server/scenes/script.py', 'server/agents/personas.py'):
+        for f in ('server/scenes/script.py', 'server/scenes/trunk.py',
+                  'server/scenes/branches.py', 'server/agents/personas.py'):
             py_compile.compile(os.path.join(ROOT, f), doraise=True)
         print('接入完成，语法自检通过。')
 

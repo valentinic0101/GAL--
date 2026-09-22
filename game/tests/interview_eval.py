@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """C5：采访式角色一致性评测基准。
 
-方法依据（《修改意见与开发文档/开发文档_C5》）：
+方法依据（《资料/06_开发与评审/开发文档_C5》）：
 - Generative Agents：采访提纲 25 题 × 5 类，把"角色立没立住"变成可评测问题；
 - 千人分身：重测一致性归一——先给"正典参考回应"打分得到上限 S_max、
   无 persona 的裸模型得到下限 S_base，一致性指数 = (S_agent-S_base)/(S_max-S_base)；
@@ -13,7 +13,7 @@
   python3 tests/interview_eval.py --llm --ablate memory    # 消融：关记忆检索
   python3 tests/interview_eval.py --llm --ablate stage_notes
   python3 tests/interview_eval.py --llm --ablate canon
-输出：docs/eval_report.md + docs/eval_history.jsonl
+输出：reports/eval_report.md + reports/eval_history.jsonl
 """
 import argparse
 import json
@@ -33,7 +33,7 @@ from world.world import World                         # noqa: E402
 from scenes.script import SCENES                      # noqa: E402
 
 DATA = os.path.join(ROOT, 'tests', 'data', 'interview_miyuki.json')
-DOCS = os.path.join(ROOT, 'docs')
+DOCS = os.path.join(ROOT, 'reports')
 
 JUDGE_SYSTEM = (
     '你是视觉小说角色扮演的评测员。给你角色设定摘要、问题与角色的回答，'
@@ -214,7 +214,7 @@ def report(qs, results, summary, llm_mode, ablate):
     with open(os.path.join(DOCS, 'eval_history.jsonl'), 'a', encoding='utf-8') as f:
         f.write(json.dumps(summary, ensure_ascii=False) + '\n')
     print('\n'.join(lines[:6]))
-    print('[report] docs/eval_report.md 已更新')
+    print('[report] reports/eval_report.md 已更新')
 
 
 if __name__ == '__main__':

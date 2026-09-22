@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""立绘抠图：把 Gemini 绘图/ 的浅灰实底立绘去底 → game/assets/sprites/ 透明 PNG。
+"""立绘抠图：把 AI 生图源文件（资料/03_美术/AI生图源文件/）的浅灰实底立绘去底
+→ game/assets/sprites/ 透明 PNG。
 
 主算法：rembg(isnet-anime) 生成软 alpha → 轻微羽化 → 轮廓内色外扩（bleed/defringe，
 把半透明边缘像素被背景污染的 RGB 替换成附近不透明像素的本色），消除白边与锯齿，
@@ -14,6 +15,8 @@
 
   其中 $ARCH 为移出归档目录（见归档目录内的 README.md）。
   若用系统 python3 直接运行，会因缺少 rembg 而自动退回旧的洪泛算法（边缘质量较差）。
+
+源目录位置由 tools/paths.py 统一给出（可用 GAL_ART_SRC 环境变量覆盖）。
 """
 import os
 import sys
@@ -21,9 +24,11 @@ from collections import deque
 
 from PIL import Image, ImageFilter
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(os.path.dirname(ROOT), 'Gemini 绘图')
-DST = os.path.join(ROOT, 'assets', 'sprites')
+import paths
+
+ROOT = paths.GAME
+SRC = paths.ART_SRC
+DST = paths.SPRITES
 
 SPRITES = ['miyuki_normal', 'miyuki_smile', 'miyuki_sad', 'miyuki_surprise', 'miyuki_white',
            'miyuki_spring', 'miyuki_hime', 'shuuji_child', 'shuuji_teen', 'toba',
@@ -133,6 +138,7 @@ _SESSION = None
 def main():
     args = sys.argv[1:]
     names = [a for a in args if not a.startswith('-')] or SPRITES
+    paths.require_art_src(SRC)
     os.makedirs(DST, exist_ok=True)
     for name in names:
         src_path = os.path.join(SRC, name + '.png')
